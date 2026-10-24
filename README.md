@@ -25,8 +25,8 @@ Frontmatter:
 | `title` | string | Entry title |
 | `date` | date | Sort and display date |
 | `tags` | string array | Index, tag pages, and the feed |
-| `summary` | string | Index blurb, meta description, and dev.to description |
-| `canonical_url` | URL string | `<link rel="canonical">` on the entry page, and the dev.to canonical URL |
+| `summary` | string | Index blurb, meta description, dev.to description, and Hashnode subtitle |
+| `canonical_url` | URL string | `<link rel="canonical">` on the entry page, and the canonical URL sent to dev.to and Hashnode |
 
 ~~~~markdown
 ---
@@ -46,7 +46,7 @@ Get-ScheduledTask -TaskName 'Nightly' | Format-List State, TaskPath
 ```
 ~~~~
 
-Set `canonical_url` to the entry's URL on this site and leave it stable. dev.to treats that URL as the article's identity. A Hashnode draft should use the same URL as "originally published at".
+Set `canonical_url` to the entry's URL on this site and leave it stable. dev.to and Hashnode treat that URL as the article's identity. Hashnode shows it as "originally published at".
 
 The index lists entries newest first, with title, date, summary, and tags. Each tag links to `/build-log/tags/<tag>/`.
 
@@ -82,34 +82,32 @@ The feed is <https://mikepred.github.io/build-log/rss.xml>. The sitemap is gener
 
 ## Publishing
 
-The markdown in `content/` is the only original. The site and dev.to are copies generated from the merged file. Edit an entry in the repo and the next push to `main` re-syncs those copies. Edits made on a platform are overwritten.
+The markdown in `content/` is the only original. The site, dev.to, and Hashnode are copies generated from the merged file. Edit an entry in the repo and the next push to `main` re-syncs those copies. Edits made on a platform are overwritten.
 
-A push to `main` deploys the site and runs [`scripts/crosspost.mjs`](scripts/crosspost.mjs). The runner finds entries added or changed in that push and sends each one through every enabled sender in [`scripts/senders/`](scripts/senders/). dev.to is the only sender today.
+A push to `main` deploys the site and runs [`scripts/crosspost.mjs`](scripts/crosspost.mjs). The runner finds entries added or changed in that push and sends each one through every enabled sender in [`scripts/senders/`](scripts/senders/). The site deploy does not wait on cross-posting.
 
 | Target | How | Actions secret |
 | --- | --- | --- |
 | Site | GitHub Pages workflow | none |
 | dev.to | `devto.mjs` | `DEVTO_API_KEY` |
+| Hashnode | `hashnode.mjs` | `HASHNODE_TOKEN`, `HASHNODE_PUBLICATION_ID` |
 
-`DEVTO_API_KEY` is a repository Actions secret (Settings → Secrets and variables → Actions). If it is missing, the dev.to sender warns and is skipped, and the run exits 0. The site deploy does not use it.
+Those names are repository Actions secrets (Settings → Secrets and variables → Actions). `HASHNODE_TOKEN` is sent as the Hashnode `Authorization` header (the token itself, not a `Bearer` prefix). If a platform's secret is missing, that sender warns and is skipped. When every sender is skipped, the run exits 0. The site deploy does not use them. Hashnode's API needs a Pro plan on the publication ([announcement](https://hashnode.com/announcements/graphql-api), May 13, 2026).
 
-dev.to receives the summary as the description and the body as `body_markdown`.
+dev.to receives the summary as the description and the body as `body_markdown`. Hashnode receives the summary as the subtitle, the body as `contentMarkdown`, and `canonical_url` as `originalArticleURL`. A Hashnode auth, plan, or API error is one line, `Hashnode FAILED: …`, in the job log and the step summary. That entry is not written to `sync-state.json`, the other senders still run, and the job exits 0.
 
-### Manual targets
-
-Hashnode is posted by hand. Paste the entry into a draft and set the canonical URL ("originally published at") to the site post. Hashnode's API needs a Pro plan on the publication ([announcement](https://hashnode.com/announcements/graphql-api), May 13, 2026), so this repo does not call it.
-
-Remote ids live in [`sync-state.json`](sync-state.json) at the repo root, keyed by entry slug. They are not written into frontmatter. The file holds dev.to ids for now.
+Remote ids live in [`sync-state.json`](sync-state.json) at the repo root, keyed by entry slug. They are not written into frontmatter.
 
 ```json
 {
   "foo-bar": {
-    "devto": { "id": "123", "url": "https://dev.to/example/foo-bar" }
+    "devto": { "id": "123", "url": "https://dev.to/example/foo-bar" },
+    "hashnode": { "id": "…", "url": "https://blog.example/foo-bar" }
   }
 }
 ```
 
-A later edit updates those ids and does not create another copy. dev.to also looks up an existing article by `canonical_url` when the id is missing, and updates that instead of creating another. After the runner finishes, including when one sender fails after another has already stored an id, the workflow commits `sync-state.json` to `main` with the message `chore: update cross-post sync state [skip ci]`. That commit does not deploy the site or cross-post again.
+A later edit updates those ids and does not create another copy. dev.to looks up an existing article by `canonical_url` when the id is missing. Hashnode looks up the publication's posts and updates one with the same `originalArticleURL` or slug. After the runner finishes, including when one sender fails after another has already stored an id, the workflow commits `sync-state.json` to `main` with the message `chore: update cross-post sync state [skip ci]`. That commit does not deploy the site or cross-post again.
 
 To add a platform, add one file in `scripts/senders/`. Export `id`, `disabledReason`, `plan`, and `publish`. `plan` must not use the network. Leave the entry frontmatter alone.
 

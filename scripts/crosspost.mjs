@@ -22,8 +22,9 @@ process warns and exits 0.`;
  *   id: string
  *   disabledReason(): string | null
  *   plan(entry, previous): { operation, request, notes }
- *   publish({ entry, previous }): Promise<{ id, url }>
- * plan must not use the network. Adding a platform is a new file in that directory.
+ *   publish({ entry, previous }): Promise<{ id, url, action } | { failed: true }>
+ * plan must not use the network. A sender that returns { failed: true } is logged
+ * by that sender and does not fail the run or write sync-state.
  */
 async function loadSenders() {
   const directory = fileURLToPath(new URL('./senders/', import.meta.url));
@@ -130,6 +131,7 @@ async function main() {
           entry,
           previous: previousFor(state, entry.slug, sender.id),
         });
+        if (remote?.failed) continue;
         rememberRemote(state, entry.slug, sender.id, remote);
         saveSyncState(state);
         const verb = remote.action === 'create' ? 'Created' : 'Updated';
