@@ -1,0 +1,69 @@
+name: Cross-post
+
+on:
+  push:
+    branches: [main]
+    # The sync-state commit touches only this file. Ignoring it stops that
+    # push from starting another cross-post run.
+    paths-ignore:
+      - sync-state.json
+
+permissions:
+  contents: write
+
+concurrency:
+  group: crosspost
+  cancel-in-progress: false
+
+jobs:
+  crosspost:
+    # [skip ci] is a second guard. A push made with the default GITHUB_TOKEN
+    # also does not start workflows, so the sync-state commit cannot loop.
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Use the latest sync state
+        run: |
+          git fetch origin main
+          if git cat-file -e origin/main:sync-state.json 2>/dev/null; then
+            git show origin/main:sync-state.json > sync-state.json
+          fi
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Publish changed entries
+        id: publish
+        env:
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+          HASHNODE_TOKEN: ${{ secrets.HASHNODE_TOKEN }}
+          HASHNODE_PUBLICATION_ID: ${{ secrets.HASHNODE_PUBLICATION_ID }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: node scripts/crosspost.mjs
+      - name: Commit sync state
+        if: ${{ always() && (steps.publish.conclusion == 'success' || steps.publish.conclusion == 'failure') }}
+        run: |
+          if [ ! -f sync-state.json ]; then
+            exit 0
+          fi
+          git fetch origin main
+          cp sync-state.json /tmp/sync-state.json
+          # -f drops the runner's dirty tree. The state to commit is the /tmp copy.
+          git checkout -f -B crosspost-sync origin/main
+          cp /tmp/sync-state.json sync-state.json
+          git add sync-state.json
+          if git diff --cached --quiet; then
+            echo "sync-state.json unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: update cross-post sync state [skip ci]"
+          git push origin HEAD:main
