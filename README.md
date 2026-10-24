@@ -25,8 +25,8 @@ Frontmatter:
 | `title` | string | Entry title |
 | `date` | date | Sort and display date |
 | `tags` | string array | Index, tag pages, and the feed |
-| `summary` | string | Index blurb, meta description, dev.to description, and Hashnode subtitle |
-| `canonical_url` | URL string | `<link rel="canonical">` on the entry page, and the canonical URL sent to dev.to and Hashnode |
+| `summary` | string | Index blurb, meta description, and dev.to description |
+| `canonical_url` | URL string | `<link rel="canonical">` on the entry page, and the dev.to canonical URL |
 
 ~~~~markdown
 ---
@@ -46,7 +46,7 @@ Get-ScheduledTask -TaskName 'Nightly' | Format-List State, TaskPath
 ```
 ~~~~
 
-Set `canonical_url` to the entry's URL on this site and leave it stable. Cross-posting treats that URL as the article's identity.
+Set `canonical_url` to the entry's URL on this site and leave it stable. dev.to treats that URL as the article's identity. A Hashnode draft should use the same URL as "originally published at".
 
 The index lists entries newest first, with title, date, summary, and tags. Each tag links to `/build-log/tags/<tag>/`.
 
@@ -82,27 +82,29 @@ The feed is <https://mikepred.github.io/build-log/rss.xml>. The sitemap is gener
 
 ## Publishing
 
-The markdown in `content/` is the only original. The site, dev.to, and Hashnode are copies generated from the merged file. Edit an entry in the repo and the next push to `main` re-syncs it. Edits made on a platform are overwritten.
+The markdown in `content/` is the only original. The site and dev.to are copies generated from the merged file. Edit an entry in the repo and the next push to `main` re-syncs those copies. Edits made on a platform are overwritten.
 
-A push to `main` deploys the site and runs [`scripts/crosspost.mjs`](scripts/crosspost.mjs). The runner finds entries added or changed in that push and sends each one through every enabled sender in [`scripts/senders/`](scripts/senders/).
+A push to `main` deploys the site and runs [`scripts/crosspost.mjs`](scripts/crosspost.mjs). The runner finds entries added or changed in that push and sends each one through every enabled sender in [`scripts/senders/`](scripts/senders/). dev.to is the only sender today.
 
-| Target | Sender | Actions secret |
+| Target | How | Actions secret |
 | --- | --- | --- |
 | Site | GitHub Pages workflow | none |
 | dev.to | `devto.mjs` | `DEVTO_API_KEY` |
-| Hashnode | `hashnode.mjs` | `HASHNODE_TOKEN`, `HASHNODE_PUBLICATION_ID` |
 
-Those names are repository Actions secrets (Settings → Secrets and variables → Actions). `HASHNODE_TOKEN` is sent as the Hashnode `Authorization` header (the token itself, not a `Bearer` prefix). If a platform's secret is missing, that sender warns and is skipped. When every sender is skipped, the run exits 0. The site deploy does not use them. Hashnode's API requires a Pro plan on the publication.
+`DEVTO_API_KEY` is a repository Actions secret (Settings → Secrets and variables → Actions). If it is missing, the dev.to sender warns and is skipped, and the run exits 0. The site deploy does not use it.
 
-dev.to receives the summary as the description and the body as `body_markdown`. Hashnode receives the summary as the subtitle, the body as `contentMarkdown`, and `canonical_url` as `originalArticleURL`.
+dev.to receives the summary as the description and the body as `body_markdown`.
 
-Remote ids live in [`sync-state.json`](sync-state.json) at the repo root, keyed by entry slug. They are not written into frontmatter.
+### Manual targets
+
+Hashnode is posted by hand. Paste the entry into a draft and set the canonical URL ("originally published at") to the site post. Hashnode's API needs a Pro plan on the publication ([announcement](https://hashnode.com/announcements/graphql-api), May 13, 2026), so this repo does not call it.
+
+Remote ids live in [`sync-state.json`](sync-state.json) at the repo root, keyed by entry slug. They are not written into frontmatter. The file holds dev.to ids for now.
 
 ```json
 {
   "foo-bar": {
-    "devto": { "id": "123", "url": "https://dev.to/example/foo-bar" },
-    "hashnode": { "id": "…", "url": "https://blog.example/foo-bar" }
+    "devto": { "id": "123", "url": "https://dev.to/example/foo-bar" }
   }
 }
 ```

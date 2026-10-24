@@ -43,8 +43,6 @@ jobs:
         id: publish
         env:
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
-          HASHNODE_TOKEN: ${{ secrets.HASHNODE_TOKEN }}
-          HASHNODE_PUBLICATION_ID: ${{ secrets.HASHNODE_PUBLICATION_ID }}
           BEFORE_SHA: ${{ github.event.before }}
         run: node scripts/crosspost.mjs
       - name: Commit sync state
