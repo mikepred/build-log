@@ -1,0 +1,296 @@
+:root {
+  color-scheme: light;
+  --bg: #f6f5f2;
+  --text: #1c1917;
+  --muted: #57534e;
+  --summary: #3f3a34;
+  --line: #e4e1da;
+  --link: #1e3a5f;
+  --inline-code-bg: #ece8e1;
+  --inline-code-text: #1c1917;
+  --measure: 42rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #161513;
+    --text: #f3f0e8;
+    --muted: #a8a29e;
+    --summary: #d6d3d1;
+    --line: #3a3732;
+    --link: #c5d4ea;
+    --inline-code-bg: #2a2825;
+    --inline-code-text: #f3f0e8;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--link);
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 3px;
+}
+
+.shell {
+  width: min(var(--measure), calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2.5rem 0 3rem;
+}
+
+.site-name {
+  margin: 0;
+  font-size: 1rem;
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+}
+
+h1.site-name {
+  font-size: 1.85rem;
+  font-variant: normal;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.site-name a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.site-name a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.lede {
+  margin: 1.25rem 0 2rem;
+  color: var(--summary);
+  font-size: 1.125rem;
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.entry-summary {
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+.entry-summary h2,
+.entry h1,
+.tag-page h1 {
+  margin: 0.15rem 0 0.4rem;
+  font-size: 1.55rem;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.entry-summary h2 a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.15em;
+}
+
+.meta,
+.tags,
+.summary,
+.empty,
+.tag-count {
+  margin: 0;
+}
+
+.meta,
+.tag-count {
+  color: var(--muted);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 0.86rem;
+  letter-spacing: 0.01em;
+}
+
+.summary {
+  margin-top: 0.55rem;
+  color: var(--summary);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.85rem;
+  margin-top: 0.7rem;
+  padding: 0;
+  list-style: none;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 0.86rem;
+}
+
+.tags a {
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+
+.tags a:hover {
+  border-bottom-color: currentColor;
+}
+
+.empty {
+  margin-top: 1.5rem;
+  color: var(--muted);
+}
+
+.entry header .summary {
+  margin-top: 0.9rem;
+  font-size: 1.15rem;
+}
+
+.body {
+  margin-top: 1.75rem;
+}
+
+.body > :first-child {
+  margin-top: 0;
+}
+
+.body h2,
+.body h3,
+.body h4 {
+  margin: 1.8rem 0 0.5rem;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.body h2 {
+  font-size: 1.35rem;
+}
+
+.body h3 {
+  font-size: 1.15rem;
+}
+
+.body p,
+.body ul,
+.body ol,
+.body blockquote,
+.body table {
+  margin: 0.9rem 0;
+}
+
+.body ul,
+.body ol {
+  padding-left: 1.3rem;
+}
+
+.body li + li {
+  margin-top: 0.25rem;
+}
+
+.body blockquote {
+  margin-left: 0;
+  padding-left: 1rem;
+  border-left: 3px solid var(--line);
+  color: var(--summary);
+}
+
+.body a {
+  text-underline-offset: 0.15em;
+}
+
+.body hr {
+  margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+.body img {
+  max-width: 100%;
+  height: auto;
+}
+
+.body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 0.95rem;
+}
+
+.body th,
+.body td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.body :not(pre) > code {
+  padding: 0.08em 0.35em;
+  border-radius: 0.25rem;
+  background: var(--inline-code-bg);
+  color: var(--inline-code-text);
+  font-family: "Cascadia Mono", "Cascadia Code", "Segoe UI Mono", ui-monospace, Consolas, monospace;
+  font-size: 0.88em;
+}
+
+pre.astro-code {
+  margin: 1.15rem 0;
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+  border-radius: 0.55rem;
+  border: 1px solid #2d333b;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  tab-size: 2;
+}
+
+pre.astro-code code {
+  font-family: "Cascadia Mono", "Cascadia Code", "Segoe UI Mono", ui-monospace, Consolas, monospace;
+  font-size: inherit;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+.site-footer {
+  margin-top: 3.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 0.86rem;
+}
+
+.site-footer p {
+  margin: 0.35rem 0;
+}
+
+.site-footer a {
+  color: inherit;
+}

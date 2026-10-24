@@ -1,0 +1,14 @@
+---
+import { getCollection } from 'astro:content';
+import EntryList from '../components/EntryList.astro';
+import { byDateDesc } from '../lib/entries';
+import { siteDescription, siteTitle } from '../lib/site';
+import Base from '../layouts/Base.astro';
+
+const entries = (await getCollection('entries')).sort(byDateDesc);
+---
+
+<Base title={siteTitle} description={siteDescription} home>
+  <p class="lede">{siteDescription}</p>
+  <EntryList entries={entries} />
+</Base>

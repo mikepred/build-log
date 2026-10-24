@@ -1,0 +1,39 @@
+---
+import { getCollection } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import EntryList from '../../components/EntryList.astro';
+import { byDateDesc } from '../../lib/entries';
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('entries');
+  const tags = [...new Set(entries.flatMap((entry) => entry.data.tags))].sort((a, b) =>
+    a.localeCompare(b),
+  );
+
+  return tags.map((tag) => ({
+    params: { tag },
+    props: {
+      tag,
+      entries: entries.filter((entry) => entry.data.tags.includes(tag)).sort(byDateDesc),
+    },
+  }));
+}
+
+interface Props {
+  tag: string;
+  entries: CollectionEntry<'entries'>[];
+}
+
+const { tag, entries } = Astro.props;
+const countLabel = entries.length === 1 ? '1 entry' : `${entries.length} entries`;
+const description = `Build log entries tagged ${tag}.`;
+---
+
+<Base title={tag} description={description}>
+  <div class="tag-page">
+    <h1>{tag}</h1>
+    <p class="tag-count">{countLabel}</p>
+    <EntryList entries={entries} />
+  </div>
+</Base>
