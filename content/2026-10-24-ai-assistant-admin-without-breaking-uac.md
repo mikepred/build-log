@@ -23,7 +23,7 @@ It's doable, but dr eggbot laid out the catch first. You turn on Windows' built-
 
 My options were full SSH admin, a narrow set of admin tasks, or keep pasting. Could the narrow version run something like `Enable-ComputerRestore`? Yes, if it was on the menu. What it can't do is run a brand-new admin command on the spot. Adding anything new means updating the protected copy of the scripts, and that takes one paste from me. That paste is my approval step, so I went with the narrow version.
 
-What it built: a folder only admins can change, holding a `runner.ps1` that accepts exactly four actions (RestorePoint, Tweaks, Apps, SaveDumps) and refuses anything else. There's one scheduled task per action under `\WinSetup\`. Each runs elevated as me, only while I'm signed in, only when started, and writes a log dr eggbot can read. My normal account can start those tasks but not edit them.
+What it built: a folder only admins can change, holding a `runner.ps1` that accepts exactly five actions (RestorePoint, Tweaks, Apps, SaveDumps, and Check, which came later) and refuses anything else. There's one scheduled task per action under `\WinSetup\`. Each runs elevated as me, only while I'm signed in, only when started, and writes a log dr eggbot can read. My normal account can start those tasks but not edit them.
 
 I pasted the installer once from an admin window. dr eggbot started the RestorePoint task from its non-admin terminal, and it worked: a fresh restore point, exit 0. Then it tested the boundary from my normal account. Writing a file into the folder: blocked. Appending to `runner.ps1`: blocked. Re-registering the task with a changed definition: access denied. It can start the tasks. It can't change what they do.
 
