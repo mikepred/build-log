@@ -23,7 +23,7 @@ At 4:21 on a Saturday morning I was a couple of hours into a Windows 11 rebuild 
 
 dr eggbot (I'd named it "Patient Zero," more on that in another entry) suggested a journal bot that drafts from our sessions, strips private details, and never publishes on its own. It asked where the journal should live, laid out the options, and leaned toward my own site with a cross-post to dev.to or Hashnode.
 
-Then I got ambitious. Under an hour later I dropped in a PRD with one word: "Thoughts?" <!-- CONFIRM: PRD was written with Microsoft 365 Copilot (Linear calls it "the Copilot plan"; the transcript doesn't name the tool). -->
+Then I got ambitious. Under an hour later I dropped in a PRD I'd written with Microsoft 365 Copilot, with one word: "Thoughts?"
 
 <!-- SHOT (hero): my sidenote message to dr eggbot asking about a public journal. See shots.md #1. -->
 
