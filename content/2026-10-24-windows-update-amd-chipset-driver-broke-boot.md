@@ -21,7 +21,7 @@ I'd just reinstalled Windows 11 Pro on my desktop (Ryzen 9 5900X on a Gigabyte X
 
 A couple of updates went in, the PC restarted, and then nothing. Black screen. I honestly thought I wasn't even getting POST. I hard-shut it down, tried again, same thing, and after a few rounds Windows gave up and showed "Automatic Repair" with something about `SrtTrail.txt`. It cycled like that until it dropped me at a recovery screen, where I just hit Continue and Windows loaded like nothing had happened.
 
-It worked, but I wanted to know why, so I had my assistant pull three things: the Startup Repair log, the Windows Update history, and the boot and crash events from the System log.
+It worked, but I wanted to know why, so I had dr eggbot, one of my Grok Bot assistants, pull three things: the Startup Repair log, the Windows Update history, and the boot and crash events from the System log.
 
 The repair log was the jackpot. It listed exactly one cause: "a recent driver update installation could be preventing Windows from starting." Update history filled in the rest. At 3:07 AM, Windows Update had installed "AMD - System 20.50.0.0," a driver for the CPU's PCIe root ports, right on top of the Gigabyte package I'd just put on. Startup Repair's fix was to uninstall it, which is why Continue worked. Checking afterward, those root ports were back on Microsoft's standard driver, Device Manager had no problem devices, and my Gigabyte AMD drivers were still in place.
 
@@ -29,7 +29,7 @@ One correction to my own story: a Windows driver can't stop the board from POSTi
 
 There was a side quest. Earlier that night, after the first batch of updates (Realtek, Intel Bluetooth, Logitech), Windows had blue-screened with `0x4E PFN_LIST_CORRUPT`. That one usually means a misbehaving driver, and less often RAM, and the logs alone couldn't say which. The event log said a dump had been saved to `C:\Windows\Minidump`. I went to look. Empty. I ran a search of the other places Windows sometimes stashes a copy, from an admin window. Nothing. The dump was gone, and I dropped it: one crash in the middle of a big driver shuffle, and it hadn't come back. If another `0x4E` shows up, a memory test is next.
 
-The real fix is boring: stop Windows Update from sending drivers at all. I install mine from Gigabyte and NVIDIA anyway. That's one policy value, `ExcludeWUDriversInQualityUpdate`. I set it by hand on this PC, and it's also in my tweaks script so a fresh install never repeats this. Security and feature updates still come through.
+The real fix is boring: stop Windows Update from sending drivers at all. I install mine from Gigabyte and NVIDIA anyway. That's one policy value, `ExcludeWUDriversInQualityUpdate`. I set it by hand on this PC, and it's also in my tweaks script so a fresh install never repeats this. Security and feature updates still come through. Later that morning, Bench Tech, a PC-maintenance Grok Bot built to look after this machine, ran its first health check and confirmed the block was still on.
 
 Losing that dump bugged me, though, so I asked the follow-up question: if this happens again, how do I catch the evidence before it disappears? It turns out that in a boot loop, Windows holds the crash data in the page file and only writes it out as a dump file on the next *successful* boot. So the setup now (confirmed with the script's own check, which came back "All settings match."):
 
