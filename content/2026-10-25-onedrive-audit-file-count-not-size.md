@@ -23,7 +23,7 @@ To design that hierarchy, Copilot wanted an inventory, and it laid out options f
 
 After that, each turn added more. The first script had a typo, so I asked Copilot to fix it and review the rest before writing a new one. It came back with a plan for "a production-grade audit script," and noted that a truly comprehensive one "gets large quickly (500-1000+ lines if done cleanly)," with SHA256 verification, ZIP packaging, parallel hashing, and Git and Obsidian detection. I asked it to plan v2 before writing it. The plan added a classifier, topic and project clustering, privacy levels, and a resume and checkpoint strategy. Copilot itself suggested freezing the scope there, and I agreed: "Freeze it. Write the ps1." It said a script that size should be a file, not a chat message, and told me the exact request to send for a downloadable .ps1. I sent it. The v2 it delivered came labeled as a "v2-alpha," with 13 features listed as still missing.
 
-So I took v2 to QA bot, one of my own Grok Bot assistants, with a narrower question: would this actually run? It would, but it had problems:
+So I took v2 to QA bot (now Inspector), one of my own Grok Bot assistants, with a narrower question: would this actually run? It would, but it had problems:
 
 - It saved its report to `$HOME\Desktop`. With my Desktop backed up to OneDrive, that isn't my real Desktop, and the report could land inside OneDrive and show up in its own scan.
 - The content-preview option ran `Get-Content` on online-only files, which makes OneDrive quietly download every one of them.
