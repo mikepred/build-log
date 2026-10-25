@@ -1,0 +1,9 @@
+---
+import Base from '../layouts/Base.astro';
+import { siteTitle } from '../lib/site';
+---
+
+<Base title="Not found" description={`That page is not on ${siteTitle}.`}>
+  <h1>Not found</h1>
+  <p class="summary">That page is not on the build log.</p>
+</Base>

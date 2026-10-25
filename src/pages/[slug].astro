@@ -1,0 +1,47 @@
+---
+import { getCollection, render } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import { formatDate, isoDate, tagHref } from '../lib/entries';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('entries');
+  return entries.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+interface Props {
+  entry: CollectionEntry<'entries'>;
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<Base title={entry.data.title} description={entry.data.summary} canonical={entry.data.canonical_url}>
+  <article class="entry">
+    <header>
+      <h1>{entry.data.title}</h1>
+      <p class="meta">
+        <time datetime={isoDate(entry.data.date)}>{formatDate(entry.data.date)}</time>
+      </p>
+      {
+        entry.data.tags.length > 0 && (
+          <ul class="tags">
+            {entry.data.tags.map((tag) => (
+              <li>
+                <a href={tagHref(tag)}>{tag}</a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+      <p class="summary">{entry.data.summary}</p>
+    </header>
+    <div class="body">
+      <Content />
+    </div>
+  </article>
+</Base>
