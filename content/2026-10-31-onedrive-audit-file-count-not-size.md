@@ -1,18 +1,19 @@
 ---
 title: "My OneDrive's problem was 322,219 files, not 268 GB"
-date: 2026-10-25
-tags: [windows-11, onedrive, powershell, performance, troubleshooting, ai-assistants]
+date: 2026-10-31
+tags: [onedrive, powershell, windows-11, ai-assistants]
 summary: "A OneDrive reorganization turned into a spec for a 500-1000+ line audit tool before anything had finished a full run. Narrowing it to fix-and-run got me a real inventory, and it showed one local code repo was 92% of my files and under 1% of the space."
 canonical_url: "https://mikepred.github.io/build-log/onedrive-audit-file-count-not-size/"
 ---
 
 ## Case file
 
+- **Incident:** Oct 25, 2026
 - **Symptom:** I wanted a folder plan for OneDrive. Instead I had a growing audit-tool spec, scripts with bugs, a 218 MB report I couldn't use, and later OneDrive saying "there are too many files in your "OneDrive" folder."
 - **Evidence:** the fixed audit counted 322,219 files and 105,150 folders (267.82 GB). All but 14 files were online-only. One local code repo held 296,714 of those files but only about 2.4 GB.
 - **Cause:** a code repo with git worktrees and `node_modules` was syncing inside OneDrive. Getting there took longer than it should have because the audit's scope kept growing (classifiers, clustering, checkpoints, ZIP packaging) before any version had produced an inventory I could use. Separately, the duplicate step crawled on that many files, most likely because of `Group-Object`.
 - **Fix:** narrowed the job to "fix the existing script and get one complete run." Rewrote the audit (never download online-only files, log errors, write output outside OneDrive, Dictionary grouping, progress bars), then deleted the repo.
-- **Prevention:** keep code repos out of OneDrive, check item counts and not just GB, and ask for the smallest script that answers the question before adding features.
+- **Prevention:** keep code repos out of OneDrive, check item counts and not just GB (Microsoft recommends syncing no more than 300,000 items), and ask for the smallest script that answers the question before adding features.
 - **Lesson:** fix and run the narrow thing first. One honest full run answered what the spec was designing around. And OneDrive cares about how many items it tracks; size was never the issue.
 
 ## The story
@@ -23,9 +24,9 @@ To design that hierarchy, Copilot wanted an inventory, and it laid out options f
 
 After that, each turn added more. The first script had a typo, so I asked Copilot to fix it and review the rest before writing a new one. It came back with a plan for "a production-grade audit script," and noted that a truly comprehensive one "gets large quickly (500-1000+ lines if done cleanly)," with SHA256 verification, ZIP packaging, parallel hashing, and Git and Obsidian detection. I asked it to plan v2 before writing it. The plan added a classifier, topic and project clustering, privacy levels, and a resume and checkpoint strategy. Copilot itself suggested freezing the scope there, and I agreed: "Freeze it. Write the ps1." It said a script that size should be a file, not a chat message, and told me the exact request to send for a downloadable .ps1. I sent it. The v2 it delivered came labeled as a "v2-alpha," with 13 features listed as still missing.
 
-So I took v2 to QA bot (now Inspector), one of my own Grok Bot assistants, with a narrower question: would this actually run? It would, but it had problems:
+So I took v2 to QA bot, one of my own Grok Bot assistants at the time (it was later rebuilt as Inspector, which is part of [how it started](/build-log/how-it-started/)), with a narrower question: would this actually run? It would, but it had problems:
 
-- It saved its report to `$HOME\Desktop`. With my Desktop backed up to OneDrive, that isn't my real Desktop, and the report could land inside OneDrive and show up in its own scan.
+- It saved its report to `$HOME\Desktop`. With my Desktop backed up to OneDrive, that isn't my real Desktop, so I'd never have seen the report. And the obvious fix, the real Desktop, is inside OneDrive, where the report would show up in its own scan.
 - The content-preview option ran `Get-Content` on online-only files, which makes OneDrive quietly download every one of them.
 - `$ErrorActionPreference='SilentlyContinue'` meant anything it couldn't read just vanished from the counts.
 - `-HashDuplicates` was declared and never used.
@@ -41,7 +42,11 @@ It went through v3-beta. The new reports were genuinely good: empty folders, fol
 
 v3.1 ran, and then it seemed to stop. The output folder had 12 files, then sat there. Task Manager showed pwsh at 2.6 GB of memory. Twelve minutes later it was still going. The 12th file was the file-name topics report, which meant it was on the duplicate step, and that step used `Group-Object Name, Length` across every file. `Group-Object` gets very slow at that scale, so it was the likely culprit. v3.2 swapped it for a plain Dictionary keyed on name and size. It also added a live progress bar to the scan and every long step, plus a "Done in hh:mm:ss" line, so I'd never again be staring at a silent window wondering whether it was dead.
 
-v3.2 finished in about 11 minutes with zero skipped paths. On this run the duplicate step took about a minute. The numbers:
+v3.2 finished in about 11 minutes with zero skipped paths. On this run the duplicate step took about a minute.
+
+![Two ways the audit went: the wide path stacked up the biggest options, a 500-1000+ line spec, alpha and beta scripts with lists of missing features, and 218 MB of reports. The narrow path fixed the existing script, found the stall in Group-Object, swapped in a Dictionary with progress bars, and got one full 11-minute run whose summary showed the answer](/build-log/images/onedrive-audit-file-count-not-size/wide-vs-narrow.svg)
+
+The numbers:
 
 - 322,219 files in 105,150 folders, 267.82 GB
 - 322,205 of those files online-only, so the scan read metadata and downloaded nothing
@@ -50,27 +55,28 @@ v3.2 finished in about 11 minutes with zero skipped paths. On this run the dupli
 
 That last line didn't look like my stuff. It was one local code repo, git worktrees and their `node_modules` included, with 296,714 files. That's about 92% of every file in my OneDrive, and it took up only about 2.4 GB, less than 1% of the space.
 
+![Three bars from the audit. Items OneDrive tracks: 427,369 files and folders, past Microsoft's 300,000-item sync recommendation. Files: 322,219, and one code repo is 296,714 of them, about 92%. Space: 267.82 GB, and the same repo is about 2.4 GB, under 1%](/build-log/images/onedrive-audit-file-count-not-size/count-vs-size.svg)
+
 I'd already decided all code could leave OneDrive, so the repo got deleted. Deleting the files locally took about two and a half minutes. An empty top folder stayed behind because another app still had it open. That was the easy part.
 
-A few hours later I asked why it was still deleting files. It wasn't my delete. It was OneDrive telling the cloud about every one of those roughly 297,000 deletions, one at a time. Then OneDrive popped up: "there are too many files in your "OneDrive" folder." QA bot explained that the warning is about how many items OneDrive tracks, roughly 300,000 files and folders, not about storage. My audit had counted about 427,000. Once the deletions finish syncing I should be down to about 25,000 files. As of writing, more than three hours after the delete, OneDrive was still working through them.
+A few hours later I asked why it was still deleting files. It wasn't my delete. It was OneDrive telling the cloud about every one of those roughly 297,000 deletions. Then OneDrive popped up: "there are too many files in your "OneDrive" folder." QA bot explained that the warning is about how many items OneDrive tracks, not about storage. Microsoft [recommends syncing no more than 300,000 items](https://support.microsoft.com/en-us/office/restrictions-and-limitations-in-onedrive-and-sharepoint-64883a5d-228e-48f5-b3d2-eb39e07630fa), files and folders together, and says performance can suffer past that. It's a guideline, not a hard cap, but my audit had counted about 427,000. Once the deletions finished syncing I'd be down to about 25,000 files. When I wrote this up that morning, more than three hours after the delete, OneDrive was still working through them.
 
 So the 268 GB number I'd been worried about was mostly photos, and that's a normal storage problem. The thing actually slowing OneDrive down was a 2.4 GB folder. No classifier or clustering engine found that. A script that finished, and a summary I actually read, did.
 
 ## Do it yourself
 
-All snippets are trimmed from my v3.2 script. They work in Windows PowerShell 5.1 and PowerShell 7, and they only read.
+These snippets are trimmed from my v3.2 script. Run them in order in one PowerShell window (Windows PowerShell 5.1 or PowerShell 7, no admin needed), since each step uses variables from the one before. Steps 1 to 6 only read OneDrive (step 3 writes one error CSV outside it). Step 7 deletes.
 
-**1. Find OneDrive and keep the report out of it.** `[Environment]::GetFolderPath('Desktop')` returns the real Desktop even when Known Folder Move has redirected it into OneDrive.
+**1. Find OneDrive and keep the report out of it.** With Known Folder Move on, `$HOME\Desktop` is the old, unused folder. `[Environment]::GetFolderPath('Desktop')` returns the Desktop you actually see, which may be inside OneDrive, so check before writing there.
 
 ```powershell
 foreach ($candidate in @($env:OneDrive, $env:OneDriveCommercial, $env:OneDriveConsumer)) {
     if ($candidate -and (Test-Path -LiteralPath $candidate)) { $OneDrivePath = $candidate; break }
 }
 $desktop = [Environment]::GetFolderPath('Desktop')
-if ($desktop -and -not (Test-IsUnder $desktop $OneDrivePath)) { $OutputDir = $desktop } else { $OutputDir = $env:USERPROFILE }
+$inOneDrive = $desktop -and $desktop.StartsWith($OneDrivePath.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)
+if ($desktop -and -not $inOneDrive) { $OutputDir = $desktop } else { $OutputDir = $env:USERPROFILE }
 ```
-
-(`Test-IsUnder` is a small prefix check in the full script.)
 
 **2. Flag online-only files instead of opening them.**
 
@@ -89,15 +95,21 @@ Skip hashing and previews for anything this returns `$true` for.
 **3. Scan with errors logged and a live count.**
 
 ```powershell
+$scanErrors = @()
 $allList = New-Object 'System.Collections.Generic.List[object]'
 Get-ChildItem -LiteralPath $OneDrivePath -Recurse -Force -ErrorAction SilentlyContinue -ErrorVariable +scanErrors |
     ForEach-Object {
         $allList.Add($_)
-        if ($allList.Count % 2000 -eq 0) { Show-Step 'Scanning OneDrive' $allList.Count 0 }
+        if ($allList.Count % 2000 -eq 0) { Write-Progress -Activity 'Scanning OneDrive' -Status "$($allList.Count) items" }
     }
+Write-Progress -Activity 'Scanning OneDrive' -Completed
+$fileRows = @($allList | Where-Object { -not $_.PSIsContainer })
+$scanErrors | ForEach-Object { [pscustomobject]@{ Path = $_.TargetObject; Error = $_.Exception.Message } } |
+    Export-Csv (Join-Path $OutputDir 'onedrive-scan-errors.csv') -NoTypeInformation
+"Skipped paths: $($scanErrors.Count)"
 ```
 
-`SilentlyContinue` is fine here because `-ErrorVariable` still collects every skipped path. Write `$scanErrors` to a CSV and print the count. `Show-Step` is a thin `Write-Progress` wrapper in the full script.
+`SilentlyContinue` is fine here because `-ErrorVariable` still collects every skipped path, and the CSV shows you what's missing from the counts.
 
 **4. Group duplicates with a Dictionary, not `Group-Object`.**
 
@@ -112,28 +124,42 @@ foreach ($f in $fileRows) {
     }
     $list.Add($f)
 }
+$dupeGroups = @($byNameSize.Values | Where-Object { $_.Count -gt 1 })
+"Name + size matches: $($dupeGroups.Count) groups"
 ```
 
-**5. If you hash, hash only files that share a size with another file.**
+**5. If you hash, hash only files that share a size with another file.** Empty files all "match" each other, and online-only files would download, so leave both out.
 
 ```powershell
-$toHash = @($fileRows | Where-Object { $_.Length -gt 0 -and $sizeCount[[long]$_.Length] -gt 1 })
+$sizeCount = @{}
+foreach ($f in $fileRows) { $sizeCount[[long]$f.Length] = 1 + [int]$sizeCount[[long]$f.Length] }
+$toHash = @($fileRows | Where-Object { $_.Length -gt 0 -and $sizeCount[[long]$_.Length] -gt 1 -and -not (Test-CloudOnly $_) })
+"Files worth hashing: $($toHash.Count)"
 ```
 
-**6. Read the summary and add files plus folders together.** That total is what OneDrive's "too many files" warning cares about.
-
-**7. Deleting a big folder.** I used this, with the long-path prefix:
+**6. Count items, not just gigabytes.** Files plus folders is the number Microsoft's 300,000-item sync recommendation is about.
 
 ```powershell
-$repo = '<OneDrive>\path\to\the-repo'   # set this to the exact folder
-cmd /c "rd /s /q `"\\?\$repo`""
+$folderCount = $allList.Count - $fileRows.Count
+$gb = ($fileRows | Measure-Object Length -Sum).Sum / 1GB
+'{0:N0} files + {1:N0} folders = {2:N0} items, {3:N2} GB' -f $fileRows.Count, $folderCount, $allList.Count, $gb
+```
+
+No script handy? Right-click the OneDrive folder in File Explorer, pick **Properties**, and read the **Contains** line. That's Microsoft's own quick check, and it counts the local folder only.
+
+**7. Deleting a big folder.** I used `rd` with the long-path prefix. Close anything that has the folder open first (editors, terminals, dev servers).
+
+```powershell
+$repo = Join-Path $OneDrivePath 'path\to\the-repo'   # set this to the exact folder
+cmd.exe /c rd /s /q "\\?\$repo"
 ```
 
 **Caveats**
 
 - Start small. Ask for (or write) the smallest script that answers your actual question, run it on the whole thing, and only then add features. Classification, clustering, and checkpoints can wait until a full run shows you need them.
-- Reading an online-only file's contents (previews, `Get-FileHash`, `-IncludeCloudOnly`) downloads it. On a mostly cloud OneDrive, that can mean a lot of downloading.
-- `rd /s /q` doesn't ask. Double-check `$repo` first.
-- Deleting inside OneDrive sends files to the OneDrive recycle bin, and they can be restored from there for a limited time. Don't count on it as a backup.
+- Reading an online-only file's contents (previews, `Get-FileHash`, `Get-Content`) downloads it. On a mostly cloud OneDrive, that can mean a lot of downloading.
+- `rd /s /q` doesn't ask, and it skips the Windows Recycle Bin. Double-check `$repo` first.
+- Deletions inside OneDrive still sync to the OneDrive recycle bin online. You can restore from there for 30 days on a personal account (93 on work or school, unless an admin changed it). Don't count on it as a backup.
 - Deleting locally is quick. Syncing hundreds of thousands of deletions to the cloud can take hours. Leave OneDrive running, and don't re-run the audit until it says it's up to date.
+- The 300,000-item number is Microsoft's performance guideline, not a hard limit. Past it, expect slow syncing, not lost files.
 - The scan holds every item in memory. Mine had pwsh at 2.6 GB with about 427,000 items.
