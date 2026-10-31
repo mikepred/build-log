@@ -27,7 +27,8 @@ No analytics, newsletter, affiliate links, or calls to action.
 - **Merge to `main` deploys the site.** GitHub Actions builds it with Astro and pushes it to GitHub Pages.
 - **The same push cross-posts.** [`scripts/crosspost.mjs`](scripts/crosspost.mjs) looks at files in `content/` that were added or changed in that push and sends each one to dev.to and Hashnode with the post's `canonical_url`, so both point back to the site. Pushes that don't touch `content/` just find nothing to send.
 - **`log/**` is ignored by the cross-post workflow,** so a log-only push just redeploys the site.
-- Edit a post here and the next push updates the copies. Edits made on dev.to or Hashnode get overwritten.
+- Site-relative links and images (like `/build-log/images/…`) are rewritten to absolute site URLs in the copies, so they still work on dev.to and Hashnode. The site itself renders the original Markdown.
+- Edit a post here and the push that changes it updates the copies. Edits made on dev.to or Hashnode get overwritten the next time that post's file changes.
 - Remote post ids live in [`sync-state.json`](sync-state.json). The workflow commits it back with `[skip ci]`, so it doesn't loop.
 
 The site also ships a sitemap (`sitemap-index.xml`), an RSS feed of posts (no log notes), and Open Graph/Twitter cards plus JSON-LD on every post. Each post gets its own 1200x630 share image (title, date, tags), rendered at build time to `/og/<slug>.png`. Other pages use `og-default.png`.
@@ -36,7 +37,7 @@ The site also ships a sitemap (`sitemap-index.xml`), an RSS feed of posts (no lo
 
 - **Pages source:** in **Settings → Pages**, set the source to **GitHub Actions**. Until then the deploy workflow has nowhere to publish.
 - **Actions secrets** (Settings → Secrets and variables → Actions): `DEVTO_API_KEY` for dev.to, `HASHNODE_TOKEN` and `HASHNODE_PUBLICATION_ID` for Hashnode. A sender with a missing secret warns and is skipped; the site deploy doesn't use them.
-- **Hashnode failures** (auth, plan, or API error) show up as one `Hashnode FAILED: …` line in the job log and step summary. That post isn't written to `sync-state.json`, the other senders still run, and the job exits 0.
+- **A rejected send fails the run.** If dev.to or Hashnode rejects a post (auth, plan, or API error), the error goes to the job log (Hashnode also adds a `Hashnode FAILED: …` line to the step summary). That post isn't written to `sync-state.json` for that site, the other senders and posts still run, and then the job exits non-zero so the check goes red. Successful sends from the same run are still committed to `sync-state.json`.
 - **Adding a platform:** add one file in `scripts/senders/` that exports `id`, `disabledReason`, `plan`, and `publish`. `plan` must not touch the network.
 
 ## Post frontmatter
