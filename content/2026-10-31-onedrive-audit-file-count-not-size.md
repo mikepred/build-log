@@ -92,16 +92,26 @@ function Test-CloudOnly($Item) {
 
 Skip hashing and previews for anything this returns `$true` for.
 
-**3. Scan with errors logged and a live count.**
+**3. Scan with errors logged and a live count.** Do not use `Get-ChildItem -Recurse` on Windows PowerShell 5.1: it follows directory junctions and directory symlinks, which can inflate counts (git worktrees, some `node_modules` layouts) or walk outside OneDrive. PowerShell 7 only follows them if you pass `-FollowSymlink`. This walk lists every item, including the junction folder itself and online-only files (also reparse points), but only descends into ordinary directories.
 
 ```powershell
 $scanErrors = @()
 $allList = New-Object 'System.Collections.Generic.List[object]'
-Get-ChildItem -LiteralPath $OneDrivePath -Recurse -Force -ErrorAction SilentlyContinue -ErrorVariable +scanErrors |
-    ForEach-Object {
-        $allList.Add($_)
-        if ($allList.Count % 2000 -eq 0) { Write-Progress -Activity 'Scanning OneDrive' -Status "$($allList.Count) items" }
-    }
+$dirs = New-Object 'System.Collections.Generic.Queue[string]'
+$dirs.Enqueue($OneDrivePath)
+while ($dirs.Count -gt 0) {
+    $dir = $dirs.Dequeue()
+    Get-ChildItem -LiteralPath $dir -Force -ErrorAction SilentlyContinue -ErrorVariable +scanErrors |
+        ForEach-Object {
+            $allList.Add($_)
+            if ($allList.Count % 2000 -eq 0) {
+                Write-Progress -Activity 'Scanning OneDrive' -Status "$($allList.Count) items"
+            }
+            if ($_.PSIsContainer -and (($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0)) {
+                $dirs.Enqueue($_.FullName)
+            }
+        }
+}
 Write-Progress -Activity 'Scanning OneDrive' -Completed
 $fileRows = @($allList | Where-Object { -not $_.PSIsContainer })
 $scanErrors | ForEach-Object { [pscustomobject]@{ Path = $_.TargetObject; Error = $_.Exception.Message } } |
@@ -163,3 +173,4 @@ cmd.exe /c rd /s /q "\\?\$repo"
 - Deleting locally is quick. Syncing hundreds of thousands of deletions to the cloud can take hours. Leave OneDrive running, and don't re-run the audit until it says it's up to date.
 - The 300,000-item number is Microsoft's performance guideline, not a hard limit. Past it, expect slow syncing, not lost files.
 - The scan holds every item in memory. Mine had pwsh at 2.6 GB with about 427,000 items.
+- Junction folders still appear in the inventory once. Their targets are not walked, so linked worktrees are not counted twice and a junction out of OneDrive is not followed.
