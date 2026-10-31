@@ -18,7 +18,6 @@ No analytics, newsletter, affiliate links, or calls to action.
 | `content/` | Posts, one Markdown file each: `content/YYYY-MM-DD-slug.md`. The only originals. |
 | `log/` | The [running log](https://mikepred.github.io/build-log/log/): short dated notes, site only. |
 | `social/` | Draft social posts for each post, one folder per slug. Not published by anything here. |
-| `archive/` | Retired material kept for the record (not on `main` yet). |
 | `src/` | The Astro site: layout, pages, RSS feed. |
 | `scripts/` | Cross-posting (`crosspost.mjs` plus one sender per platform in `senders/`) and its tests. |
 | `public/` | Static files: images, favicon, `og-default.png`, `robots.txt`. |
@@ -32,6 +31,13 @@ No analytics, newsletter, affiliate links, or calls to action.
 - Remote post ids live in [`sync-state.json`](sync-state.json). The workflow commits it back with `[skip ci]`, so it doesn't loop.
 
 The site also ships a sitemap (`sitemap-index.xml`), an RSS feed of posts (no log notes), and Open Graph/Twitter cards plus JSON-LD on every post.
+
+## One-time setup
+
+- **Pages source:** in **Settings → Pages**, set the source to **GitHub Actions**. Until then the deploy workflow has nowhere to publish.
+- **Actions secrets** (Settings → Secrets and variables → Actions): `DEVTO_API_KEY` for dev.to, `HASHNODE_TOKEN` and `HASHNODE_PUBLICATION_ID` for Hashnode. A sender with a missing secret warns and is skipped; the site deploy doesn't use them.
+- **Hashnode failures** (auth, plan, or API error) show up as one `Hashnode FAILED: …` line in the job log and step summary. That post isn't written to `sync-state.json`, the other senders still run, and the job exits 0.
+- **Adding a platform:** add one file in `scripts/senders/` that exports `id`, `disabledReason`, `plan`, and `publish`. `plan` must not touch the network.
 
 ## Post frontmatter
 

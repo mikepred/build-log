@@ -17,7 +17,7 @@ const entries = defineCollection({
   schema: z.object({
     title: z.string(),
     date: z.coerce.date(),
-    tags: z.array(z.string()),
+    tags: z.array(z.string()).max(4, 'At most 4 tags (dev.to limit).'),
     summary: z.string(),
     canonical_url: z.url(),
   }),
