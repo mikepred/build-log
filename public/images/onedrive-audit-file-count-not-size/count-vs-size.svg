@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 380" width="880" height="380" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+<title id="t">My OneDrive by count and by size</title><desc id="d">Three bars from the audit. Items OneDrive tracks: 427,369 files and folders, past Microsoft's recommendation of syncing no more than 300,000 items. Files: 322,219, and one local code repo with git worktrees and node_modules is 296,714 of them, about 92 percent. Space: 267.82 GB, mostly photos, and the same repo is about 2.4 GB, under 1 percent.</desc>
+<rect width="880" height="380" rx="12" fill="#fbfaf7"/>
+<text x="40" y="44" font-size="20" font-weight="600" fill="#1f2328">Count the items, not the gigabytes</text>
+<g font-size="13">
+<text x="40" y="104" font-size="14" font-weight="600" fill="#1f2328">Items OneDrive tracks</text>
+<text x="40" y="124" fill="#57606a">files + folders: 427,369</text>
+<rect x="280" y="94" width="532" height="34" rx="4" fill="#ddf4ff" stroke="#0969da" stroke-width="1.5"/>
+<text x="296" y="116" font-weight="600" fill="#1f2328">427,369 items</text>
+<line x1="653" y1="82" x2="653" y2="140" stroke="#cf222e" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="653" y="76" text-anchor="middle" fill="#cf222e" font-weight="600">300,000 recommended</text>
+<text x="40" y="194" font-size="14" font-weight="600" fill="#1f2328">Files</text>
+<text x="40" y="214" fill="#57606a">322,219</text>
+<rect x="280" y="184" width="560" height="34" rx="4" fill="#f6f8fa" stroke="#57606a" stroke-width="1.5"/>
+<rect x="280" y="184" width="515" height="34" rx="4" fill="#ffebe9" stroke="#cf222e" stroke-width="1.5"/>
+<text x="296" y="206" font-weight="600" fill="#1f2328">one code repo: 296,714 files (92%)</text>
+<text x="840" y="238" text-anchor="end" fill="#57606a">everything else: 25,505</text>
+<text x="40" y="284" font-size="14" font-weight="600" fill="#1f2328">Space</text>
+<text x="40" y="304" fill="#57606a">267.82 GB</text>
+<rect x="280" y="274" width="560" height="34" rx="4" fill="#dafbe1" stroke="#1a7f37" stroke-width="1.5"/>
+<rect x="280" y="274" width="6" height="34" fill="#cf222e"/>
+<text x="300" y="296" font-weight="600" fill="#1f2328">photos, documents and everything else: about 265 GB</text>
+<text x="280" y="328" fill="#cf222e">the same repo: about 2.4 GB (under 1%)</text>
+</g>
+<text x="40" y="360" font-size="14" fill="#1f2328">One folder was 92% of the files and under 1% of the space. The warning counts items.</text>
+</svg>
