@@ -115,6 +115,6 @@ Register-ScheduledTask -TaskName 'SaveCrashDumps' -Action $act -Trigger $trig -U
 
 - With the driver policy on, you own driver updates. Get chipset and GPU drivers from the vendor yourself.
 - Dumps only land after a successful boot. The startup task catches them then, before cleanup can.
-- Full memory dumps are large; the script names each copy by timestamp so it isn't re-copied every boot.
+- `MEMORY.DMP` can be several GB; the script names each copy by timestamp so it isn't re-copied every boot.
 - `ntbtlog.txt` keeps growing while boot logging is on.
 - With AutoReboot off, the PC sits on the blue screen until you restart it. Photograph the stop code and any driver name first.
