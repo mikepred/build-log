@@ -4,6 +4,7 @@ import { relative, resolve } from 'node:path';
 import matter from 'gray-matter';
 import { ScriptError } from './errors.mjs';
 import { isContentEntryPath, slugFromEntryPath } from './entry-file.mjs';
+import { absolutizeSiteUrls, siteRootFromCanonical } from './absolute-urls.mjs';
 
 /**
  * One parsed entry. Senders receive this object and do not read frontmatter.
@@ -40,15 +41,24 @@ export function entryFromFile(filePath) {
     throw new ScriptError(`${filePath}: body still starts with frontmatter.`);
   }
 
+  const slug = slugFromEntryPath(normalized);
+  const siteRoot = siteRootFromCanonical(canonicalUrl, slug);
+  if (!siteRoot) {
+    throw new ScriptError(
+      `${filePath}: canonical_url must end with /${slug}/ so site-relative URLs can be made absolute.`,
+    );
+  }
+
   return {
     file: normalized,
-    slug: slugFromEntryPath(normalized),
+    slug,
     title,
     date: date.toISOString(),
     tags,
     summary,
     canonicalUrl,
-    body,
+    // Cross-posts live on other domains: /base/... URLs become absolute.
+    body: absolutizeSiteUrls(body, siteRoot),
   };
 }
 
