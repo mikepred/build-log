@@ -114,3 +114,4 @@ Give me one settled answer, what changed, and what's still unverified.
 - "Two or three asks" is a judgment call. Count on purpose.
 - More bots means more instructions to keep in sync, and more chats to check. Every split has a cost; the rules above are worth more than the count.
 - If you share bot instructions publicly, strip out machine names, usernames, and folder paths first.
+
