@@ -18,7 +18,7 @@ No analytics, newsletter, affiliate links, or calls to action.
 | `content/` | Posts, one Markdown file each: `content/YYYY-MM-DD-slug.md`. The only originals. |
 | `log/` | The [running log](https://mikepred.github.io/build-log/log/): short dated notes, site only. |
 | `social/` | Draft social posts for each post, one folder per slug. Not published by anything here. |
-| `src/` | The Astro site: layout, pages, RSS feed. |
+| `src/` | The Astro site: layout, pages, RSS feed, and the per-post social card renderer (font in `src/assets/fonts/`, SIL OFL). |
 | `scripts/` | Cross-posting (`crosspost.mjs` plus one sender per platform in `senders/`) and its tests. |
 | `public/` | Static files: images, favicon, `og-default.png`, `robots.txt`. |
 
@@ -30,7 +30,7 @@ No analytics, newsletter, affiliate links, or calls to action.
 - Edit a post here and the next push updates the copies. Edits made on dev.to or Hashnode get overwritten.
 - Remote post ids live in [`sync-state.json`](sync-state.json). The workflow commits it back with `[skip ci]`, so it doesn't loop.
 
-The site also ships a sitemap (`sitemap-index.xml`), an RSS feed of posts (no log notes), and Open Graph/Twitter cards plus JSON-LD on every post.
+The site also ships a sitemap (`sitemap-index.xml`), an RSS feed of posts (no log notes), and Open Graph/Twitter cards plus JSON-LD on every post. Each post gets its own 1200x630 share image (title, date, tags), rendered at build time to `/og/<slug>.png`. Other pages use `og-default.png`.
 
 ## One-time setup
 

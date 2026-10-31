@@ -12,8 +12,13 @@ export const authorName = 'Mike';
 export const authorUsername = 'mikepred';
 export const authorUrl = 'https://github.com/mikepred';
 
-/** Default social card in public/, used for og:image and twitter:image on every page. */
+/** Default social card in public/, used for og:image and twitter:image on pages that aren't posts. */
 export const ogImagePath = 'og-default.png';
 export const ogImageWidth = 1200;
 export const ogImageHeight = 630;
 export const ogImageAlt = 'build log by mikepred';
+
+/** Per-post social card generated at build time by src/pages/og/[slug].png.ts. Relative to the base path. */
+export function postOgImagePath(slug: string): string {
+  return `og/${encodeURIComponent(slug)}.png`;
+}

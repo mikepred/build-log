@@ -3,6 +3,7 @@ import { getCollection, render } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import { formatDate, isoDate, tagHref } from '../lib/entries';
+import { ogImageAlt, postOgImagePath } from '../lib/site';
 
 export async function getStaticPaths() {
   const entries = await getCollection('entries');
@@ -25,6 +26,7 @@ const { Content } = await render(entry);
   description={entry.data.summary}
   canonical={entry.data.canonical_url}
   article={{ date: entry.data.date, tags: entry.data.tags }}
+  image={{ path: postOgImagePath(entry.id), alt: `${entry.data.title}, ${ogImageAlt}` }}
 >
   <article class="entry">
     <header>
