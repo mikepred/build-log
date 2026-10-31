@@ -45,7 +45,7 @@ At 3:50 AM, with five bots and a dozen open threads, I typed that I was "jumping
 
 So the big picture got a lane. **Front Desk** tracked and routed work but couldn't create bots. dr eggbot stretched from "bot minter" to "team architect." **Stacks** became the librarian for private notes. Every bot got the same two standing rules: off-scope asks get a short answer plus a quiet note to the architect, and half-formed ideas get parked with Stacks. By 4:45 AM it was, in the team page's own words, "seven bots, split into lanes: one front door, three makers, one checker, one second opinion, and an architect."
 
-![The team over one week: one bot on night one, three by sunrise, seven after night two, nine at the peak, then back to one on October 30](/build-log/images/how-it-started/team-timeline.svg)
+![The team over one week: one bot on night one, three by sunrise, seven after night two, nine at the peak, then back to one on October 30](https://mikepred.github.io/build-log/images/how-it-started/team-timeline.svg)
 
 ### The rest of the week
 
@@ -63,7 +63,7 @@ What tipped it: I had the librarian, Stacks, start working with the debate partn
 
 The work moves to one bot, **HQ**. It's my main workbench: I do the actual work there, and this build log is a byproduct of that work instead of a separate team's job. Its first act was a survey of what the team left behind: an Astro site that had never published a post, fourteen draft pull requests, and a cross-posting pipeline that had never run. The plan: a running log page, this retro, then the three drafts closest to done, then archive the rest as attempt #1.
 
-![Then and now: nine bots with separate lanes, versus one workbench where the work happens, a draft entry, my merge, and a GitHub Action that ships it](/build-log/images/how-it-started/then-and-now.svg)
+![Then and now: nine bots with separate lanes, versus one workbench where the work happens, a draft entry, my merge, and a GitHub Action that ships it](https://mikepred.github.io/build-log/images/how-it-started/then-and-now.svg)
 
 Deleting the team doesn't mean the week was wasted. Nearly every rule I'd keep came out of a specific moment with a specific bot. I just don't need nine chats to follow them. Less is more.
 
