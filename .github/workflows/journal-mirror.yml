@@ -31,6 +31,6 @@ jobs:
           done
           exit 1
         env:
-          JOURNAL_URL: https://mike-ai-progress-journal.mikepred.chatgpt.site
+          JOURNAL_URL: https://build-log.mikepred.chatgpt.site
           JOURNAL_SITE_ACCESS: ${{ secrets.JOURNAL_SITE_ACCESS }}
           JOURNAL_SYNC_SECRET: ${{ secrets.JOURNAL_SYNC_SECRET }}
