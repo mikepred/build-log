@@ -1,7 +1,7 @@
 ---
 title: "Windows Update pushed an AMD chipset driver over mine and broke boot"
 date: 2026-10-24
-tags: [windows-11, windows-update, drivers, amd, troubleshooting, powershell]
+tags: [windows-11, windows-update, drivers, troubleshooting]
 summary: "A fresh Windows 11 install, vendor chipset drivers, then Windows Update. One AMD driver later the PC wouldn't boot. SrtTrail.txt named the cause, Startup Repair rolled it back, and one policy keeps it from happening again."
 canonical_url: "https://mikepred.github.io/build-log/windows-update-amd-chipset-driver-broke-boot/"
 ---
@@ -21,9 +21,11 @@ I'd just reinstalled Windows 11 Pro on my desktop (Ryzen 9 5900X on a Gigabyte X
 
 A couple of updates went in, the PC restarted, and then nothing. Black screen. I honestly thought I wasn't even getting POST. I hard-shut it down, tried again, same thing, and after a few rounds Windows gave up and showed "Automatic Repair" with something about `SrtTrail.txt`. It cycled like that until it dropped me at a recovery screen, where I just hit Continue and Windows loaded like nothing had happened.
 
-It worked, but I wanted to know why, so I had dr eggbot, one of my Grok Bot assistants, pull three things: the Startup Repair log, the Windows Update history, and the boot and crash events from the System log.
+It worked, but I wanted to know why, so I had dr eggbot, the Grok Bot I was working with that night, pull three things: the Startup Repair log, the Windows Update history, and the boot and crash events from the System log.
 
 The repair log was the jackpot. It listed exactly one cause: "a recent driver update installation could be preventing Windows from starting." Update history filled in the rest. At 3:07 AM, Windows Update had installed "AMD - System 20.50.0.0," a driver for the CPU's PCIe root ports, right on top of the Gigabyte package I'd just put on. Startup Repair's fix was to uninstall it, which is why Continue worked. Checking afterward, those root ports were back on Microsoft's standard driver, Device Manager had no problem devices, and my Gigabyte AMD drivers were still in place.
+
+![Timeline of the night: fresh Windows 11 install, Gigabyte chipset and NVIDIA drivers, Windows Update installs AMD - System 20.50.0.0 at 3:07 AM, boot loop into Automatic Repair, Startup Repair uninstalls that driver, then a policy blocks Windows Update drivers](/build-log/images/windows-update-amd-chipset-driver-broke-boot/boot-loop-timeline.svg)
 
 One correction to my own story: a Windows driver can't stop the board from POSTing. Most likely the hang came right after POST while the screen was still dark, and my hard shutdowns are what kicked off Automatic Repair after a couple of tries.
 
@@ -38,6 +40,8 @@ Losing that dump bugged me, though, so I asked the follow-up question: if this h
 - turns on boot logging, so if a boot hangs with no blue screen, the last driver in `ntbtlog.txt` is the suspect
 - runs a startup task a minute after every boot that copies any new dump into a folder cleanup tools don't touch
 
+![How crash evidence survives now: a blue screen stays on screen for a photo, the crash data waits in the page file, the next successful boot writes MEMORY.DMP and a minidump, and a startup task copies them to C:\CrashVault. A hang with no blue screen leaves ntbtlog.txt instead](/build-log/images/windows-update-amd-chipset-driver-broke-boot/crash-evidence-flow.svg)
+
 ## Do it yourself
 
 These are PowerShell commands. Anything that writes to `HKLM`, `bcdedit`, or registers a SYSTEM task needs an **elevated** PowerShell window.
@@ -48,7 +52,7 @@ These are PowerShell commands. Anything that writes to `HKLM`, `bcdedit`, or reg
 Get-Content C:\Windows\System32\LogFiles\Srt\SrtTrail.txt
 ```
 
-Look for the root cause line. Mine named "a recent driver update installation."
+Look for the root cause line. Mine named "a recent driver update installation." If you're still stuck in recovery, open **Troubleshoot > Advanced options > Command Prompt** and run `type C:\Windows\System32\LogFiles\Srt\SrtTrail.txt` instead. In recovery the Windows drive can have a different letter, so try `D:` if `C:` doesn't have it.
 
 **2. Check what Windows Update installed, and when.**
 
@@ -83,7 +87,7 @@ New-ItemProperty $cc -Name AutoReboot -Value 0 -PropertyType DWord -Force | Out-
 bcdedit /set '{current}' bootlog yes          # writes C:\Windows\ntbtlog.txt at boot
 ```
 
-**6. Copy dumps aside at every startup.** Save this as `C:\ProgramData\WinSetup\save-dumps.ps1`:
+**6. Copy dumps aside at every startup.** Create the folder first (`New-Item C:\ProgramData\WinSetup -ItemType Directory -Force`), then save this as `C:\ProgramData\WinSetup\save-dumps.ps1`:
 
 ```powershell
 $vault = 'C:\CrashVault'
