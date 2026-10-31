@@ -9,12 +9,15 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "test": "node --test scripts/*.test.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.4",
     "astro": "^7.4.2",
-    "gray-matter": "^4.0.3"
+    "gray-matter": "^4.0.3",
+    "mdast-util-from-markdown": "2.0.3",
+    "parse5": "7.3.0"
   }
 }
