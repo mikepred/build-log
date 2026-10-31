@@ -7,6 +7,7 @@ on:
     # push from starting another cross-post run.
     paths-ignore:
       - sync-state.json
+      - 'log/**' #NEW
 
 permissions:
   contents: write
@@ -39,6 +40,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Run tests   # NEW
+        run: npm test     # NEW
       - name: Publish changed entries
         id: publish
         env:
