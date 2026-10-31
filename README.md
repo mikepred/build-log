@@ -16,7 +16,7 @@ The date prefix is only the filename. The public URL drops it, along with `.md`:
 
 `content/2026-10-24-foo-bar.md` → `https://mikepred.github.io/build-log/foo-bar/`
 
-`tags`, `index`, `404`, and `rss.xml` are reserved slugs.
+`tags`, `index`, `404`, `rss.xml`, and `log` are reserved slugs.
 
 Frontmatter:
 
@@ -51,6 +51,25 @@ Set `canonical_url` to the entry's URL on this site and leave it stable. dev.to 
 The index lists entries newest first, with title, date, summary, and tags. Each tag links to `/build-log/tags/<tag>/`.
 
 `content/.gitkeep` keeps the folder in git when there are no posts. The site builds with an empty collection. Astro prints warnings that there are no entries; the build still exits successfully.
+
+## Running log
+
+Short dated notes live in `log/` at the repo root, one Markdown file per note, and render newest first at <https://mikepred.github.io/build-log/log/>.
+
+```text
+log/YYYY-MM-DD-anything.md
+```
+
+```markdown
+---
+date: 2026-10-30
+title: optional heading
+---
+
+a few casual lines about what happened.
+```
+
+Notes are outside `content/`, so they are never cross-posted. `log/**` is in the cross-post workflow's `paths-ignore`, and a push that only adds a note just redeploys the site. `log` is a reserved slug.
 
 ## Run locally
 
