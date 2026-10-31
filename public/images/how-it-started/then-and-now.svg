@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 400" width="880" height="400" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+<title id="t">Then and now</title><desc id="d">Attempt one: nine bots in separate lanes (front door, architect, makers, checker, second opinion, writer, librarian). Now: one workbench, HQ, where the work happens; a draft entry; Mike merges; a GitHub Action deploys the site and cross-posts.</desc>
+<rect width="880" height="400" rx="12" fill="#fbfaf7"/>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker></defs>
+<text x="40" y="44" font-size="20" font-weight="600" fill="#1f2328">Then: nine lanes</text>
+<text x="480" y="44" font-size="20" font-weight="600" fill="#1f2328">Now: one workbench</text>
+<line x1="450" y1="30" x2="450" y2="370" stroke="#d0d7de" stroke-width="1.5"/>
+<rect x="40" y="70" width="185" height="44" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="132" y="97" text-anchor="middle" font-size="13" fill="#1f2328">Front Desk · front door</text>
+<rect x="240" y="70" width="185" height="44" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="332" y="97" text-anchor="middle" font-size="13" fill="#1f2328">dr eggbot · architect</text>
+<rect x="40" y="128" width="185" height="44" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="132" y="155" text-anchor="middle" font-size="13" fill="#1f2328">Bench Tech · PC</text>
+<rect x="240" y="128" width="185" height="44" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="332" y="155" text-anchor="middle" font-size="13" fill="#1f2328">Case Notes · writer</text>
+<rect x="40" y="186" width="185" height="44" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="132" y="213" text-anchor="middle" font-size="13" fill="#1f2328">Stacks · librarian</text>
+<rect x="240" y="186" width="185" height="44" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="332" y="213" text-anchor="middle" font-size="13" fill="#1f2328">Inspector · checker</text>
+<rect x="40" y="244" width="185" height="44" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="132" y="271" text-anchor="middle" font-size="13" fill="#1f2328">Grok Sparring · 2nd opinion</text>
+<rect x="240" y="244" width="185" height="44" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="332" y="271" text-anchor="middle" font-size="13" fill="#1f2328">bot 8 · TODO</text>
+<rect x="40" y="302" width="185" height="44" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="132" y="329" text-anchor="middle" font-size="13" fill="#1f2328">bot 9 · TODO</text>
+<rect x="510" y="70" width="320" height="48" rx="8" fill="#ffffff" stroke="#1a7f37" stroke-width="2"/>
+<text x="670" y="100" text-anchor="middle" font-size="15" font-weight="600" fill="#1f2328">HQ: the actual work</text>
+<line x1="670" y1="120" x2="670" y2="146" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="510" y="148" width="320" height="48" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="2"/>
+<text x="670" y="178" text-anchor="middle" font-size="15" font-weight="600" fill="#1f2328">draft entry (a PR)</text>
+<line x1="670" y1="198" x2="670" y2="224" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="510" y="226" width="320" height="48" rx="8" fill="#ffffff" stroke="#8250df" stroke-width="2"/>
+<text x="670" y="256" text-anchor="middle" font-size="15" font-weight="600" fill="#1f2328">I merge</text>
+<line x1="670" y1="276" x2="670" y2="302" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="510" y="304" width="320" height="48" rx="8" fill="#ffffff" stroke="#57606a" stroke-width="2"/>
+<text x="670" y="334" text-anchor="middle" font-size="15" font-weight="600" fill="#1f2328">GitHub Action: site + cross-posts</text>
+</svg>
