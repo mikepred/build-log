@@ -10,9 +10,9 @@ canonical_url: "https://mikepred.github.io/build-log/windows-update-amd-chipset-
 
 - **Symptom:** after a fresh Windows 11 Pro install plus Gigabyte chipset drivers, Windows Update ran, the PC restarted, and it got stuck in a boot loop that ended in Automatic Repair.
 - **Evidence:** `SrtTrail.txt` said "a recent driver update installation could be preventing Windows from starting." Update history showed "AMD - System 20.50.0.0" installed at 3:07 AM.
-- **Cause:** Windows Update installed its own AMD driver for the CPU's PCIe root ports on top of the vendor chipset package.
+- **Likely cause:** Windows Update installed its own AMD driver for the CPU's PCIe root ports on top of the vendor chipset package. No dump or boot log survived from the failed boots, but the repair log, the timing and the rollback all point there.
 - **Fix:** Startup Repair uninstalled that driver on its own; Continue booted normally.
-- **Prevention:** `ExcludeWUDriversInQualityUpdate = 1`, plus crash-evidence settings: keep dumps, AutoReboot off, boot logging, and a startup task that copies dumps aside. All verified live.
+- **Prevention:** `ExcludeWUDriversInQualityUpdate = 1`, plus crash-evidence settings: keep dumps, AutoReboot off, boot logging, and a startup task that copies dumps aside. Settings verified live; the copy task hasn't had a crash to catch yet.
 - **Lesson:** run Windows Update *before* vendor drivers, or block its drivers entirely.
 
 ## The story
@@ -52,7 +52,7 @@ These are PowerShell commands. Anything that writes to `HKLM`, `bcdedit`, or reg
 Get-Content C:\Windows\System32\LogFiles\Srt\SrtTrail.txt
 ```
 
-Look for the root cause line. Mine named "a recent driver update installation." If you're still stuck in recovery, open **Troubleshoot > Advanced options > Command Prompt** and run `type C:\Windows\System32\LogFiles\Srt\SrtTrail.txt` instead. In recovery the Windows drive can have a different letter, so try `D:` if `C:` doesn't have it.
+Look for the root cause line. Mine named "a recent driver update installation." If you're still stuck in recovery, open **Troubleshoot > Advanced options > Command Prompt** and run `type C:\Windows\System32\LogFiles\Srt\SrtTrail.txt` instead (that's cmd, not PowerShell). In recovery the Windows drive can have a different letter, so try `D:` if `C:` doesn't have it.
 
 **2. Check what Windows Update installed, and when.**
 
@@ -61,7 +61,7 @@ $s = New-Object -ComObject Microsoft.Update.Session; $h = $s.CreateUpdateSearche
 $h.QueryHistory(0,25) | ForEach-Object { '{0:yyyy-MM-dd HH:mm}  result={1}  {2}' -f $_.Date.ToLocalTime(), $_.ResultCode, $_.Title }
 ```
 
-Line the timestamps up against your failed boot.
+Line the timestamps up against your failed boot. `result=2` means it installed, `3` installed with errors, `4` failed.
 
 **3. Look for an earlier bugcheck.**
 

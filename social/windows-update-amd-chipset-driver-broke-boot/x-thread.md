@@ -6,7 +6,7 @@ Draft only. Mike schedules it himself. Post after the entry is live.
 Fresh Windows 11 install. Chipset drivers straight from Gigabyte, then the NVIDIA driver, then Windows Update. One restart later: black screen, boot loop, Automatic Repair. 🧵
 
 **2/5**
-The clue was in SrtTrail.txt, the Startup Repair log: "a recent driver update installation could be preventing Windows from starting." Update history named it: "AMD - System 20.50.0.0," installed at 3:07 AM right over the Gigabyte package.
+The clue was in SrtTrail.txt, the Startup Repair log: "a recent driver update installation could be preventing Windows from starting." Update history pointed at the likely culprit: "AMD - System 20.50.0.0," installed at 3:07 AM right over the Gigabyte package.
 
 **3/5**
 Startup Repair had already uninstalled it, which is why hitting Continue just worked. Lesson: run Windows Update before vendor drivers, or don't let it send drivers at all.

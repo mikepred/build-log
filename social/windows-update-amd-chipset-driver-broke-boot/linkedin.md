@@ -4,7 +4,7 @@ Draft only. Mike schedules it himself.
 
 I reinstalled Windows 11, installed my motherboard vendor's chipset drivers, then ran Windows Update. One restart later the PC was stuck in a boot loop.
 
-The Startup Repair log (SrtTrail.txt) said a recent driver update could be keeping Windows from starting. Update history showed which one: Windows Update had installed its own AMD driver right on top of the vendor package. Startup Repair rolled it back, and the PC booted normally.
+The Startup Repair log (SrtTrail.txt) said a recent driver update could be keeping Windows from starting. Update history showed the likely one: Windows Update had installed its own AMD driver right on top of the vendor package. Startup Repair rolled it back, and the PC booted normally.
 
 What I changed:
 • Windows Update no longer installs drivers on this PC (one policy value, ExcludeWUDriversInQualityUpdate). Security and feature updates still arrive; I get drivers from the vendor myself.
