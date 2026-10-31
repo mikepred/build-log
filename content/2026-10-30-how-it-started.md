@@ -10,9 +10,9 @@ canonical_url: "https://mikepred.github.io/build-log/how-it-started/"
 
 - **Symptom:** I wanted AI help with my PC and my projects, and a public record of it, without designing a whole system up front or tracking everything by hand.
 - **Evidence:** one week, one Windows PC, and a pile of chats: one bot on the first night, three by sunrise, seven by the next morning, nine by the end. Fourteen draft entries sat in pull requests, none of them merged.
-- **Cause:** every bot was added for a real reason, but each one was another chat to visit, another set of instructions to keep current, and another place for work to get stuck. TODO(mike): one or two lines in your words on why you pulled the plug.
+- **Cause:** every bot was added for a real reason, but each one was another chat to visit, another set of instructions to keep current, and another place for work to get stuck. And I had the team architect minting new bots before I fully understood what we were building.
 - **Fix:** on October 30, 2026 I deleted the whole team and handed the build log to one bot, HQ. It's my main workbench, and this log is a byproduct of the work I do there.
-- **Prevention:** the rules the team taught me stay, even with one bot: evidence before structure, one job per role with written anti-jobs, a checker that owns no code, a second round of arguing, real fixes as the only content, and code for anything with no judgment in it.
+- **Prevention:** the rules the team taught me stay, even with one bot: evidence before structure, one job per role with written anti-jobs, a checker that owns no code, a second round of arguing, real fixes as the only content, code for anything with no judgment in it, and respect for how much context one bot can hold.
 - **Lesson:** the team was the scaffolding. The rules are what I'm keeping.
 
 ## The story
@@ -49,7 +49,7 @@ So the big picture got a lane. **Front Desk** tracked and routed work but couldn
 
 ### The rest of the week
 
-TODO(mike): bots eight and nine. What they were called, what job each had, and the ask that justified them.
+The last two showed up the way the rest did, some on the same day and some spread over a few days. I honestly don't remember the exact order. One was **Student Discount Finder**. The other was **Hermes Agent Fixer**. Neither came from a pile of repeated asks. I just liked the idea that every bot should have its own lane, so that when one conversation got long, the history wouldn't be stuck in one place and another bot could pick it up.
 
 The build log itself came out of that week too. A PRD I'd been handed for an "autonomous content engine" wanted ten channels, affiliate links, daily posts "even when no article is released," and 50 articles in six months. It got called what it was, a content farm. What survived is one markdown file per real problem, a pull request, and my merge as the only approval. My own words from that session are basically this log's mission statement: "Errors come up through some course of work, the process of fixing it becomes the content."
 
@@ -59,17 +59,17 @@ By the end of the week the team had drafted fourteen entries. All of them were s
 
 On October 30, 2026 I deleted all nine bots.
 
-TODO(mike): what actually tipped it, in your own words. Keep it to what happened, no infrastructure details.
+What tipped it: I had the librarian, Stacks, start working with the debate partner, Grok Sparring, to go outside the platform and ask for more revisions to my Obsidian vault. What came back were revisions I couldn't follow. When I can't follow what my own bots did to my own notes, there are too many of them.
 
 The work moves to one bot, **HQ**. It's my main workbench: I do the actual work there, and this build log is a byproduct of that work instead of a separate team's job. Its first act was a survey of what the team left behind: an Astro site that had never published a post, fourteen draft pull requests, and a cross-posting pipeline that had never run. The plan: a running log page, this retro, then the three drafts closest to done, then archive the rest as attempt #1.
 
 ![Then and now: nine bots with separate lanes, versus one workbench where the work happens, a draft entry, my merge, and a GitHub Action that ships it](/build-log/images/how-it-started/then-and-now.svg)
 
-Deleting the team doesn't mean the week was wasted. Nearly every rule I'd keep came out of a specific moment with a specific bot. I just don't need nine chats to follow them.
+Deleting the team doesn't mean the week was wasted. Nearly every rule I'd keep came out of a specific moment with a specific bot. I just don't need nine chats to follow them. Less is more.
 
 ## Do it yourself
 
-These are the rules I'm keeping. They work with one assistant or with ten.
+These are the seven rules I'm keeping. They work with one assistant or with ten.
 
 **1. Evidence before you add a bot.** Start with one general assistant and tell it the rule:
 
@@ -106,6 +106,8 @@ Give me one settled answer, what changed, and what's still unverified.
 **5. The process of fixing is the content.** If you want your work to double as a portfolio, publish the real problem and the real fix, one entry per case, and make your own merge the only approval. No daily filler, no affiliate links, no fifty-articles goal.
 
 **6. Code over bots for deterministic jobs.** If a step has no judgment in it, like publishing on merge or cross-posting, use a CI job or a script. A bot in that spot is one more thing that can go wrong.
+
+**7. Don't underestimate context.** Know how much one bot can hold and still be useful before another has to take over. A long conversation slowly stops being useful, and that limit arrives sooner than you'd think. Splitting into bots doesn't fix it either: you just get more places to lose track. Plan for the handoff (a short written summary, a log, a pull request) before you need it.
 
 **Caveats**
 

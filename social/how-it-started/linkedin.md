@@ -15,7 +15,8 @@ What I'm keeping:
 • Push any first answer for a second round, and list what's still unverified.
 • Publish real problems and real fixes, not volume.
 • If a step has no judgment in it, use code, not an AI.
+• Don't underestimate context. Know how much one assistant can hold before another has to take over.
 
 Full write-up: https://mikepred.github.io/build-log/how-it-started/
 
-TODO(mike): optional closing line about what you're studying or looking for.
+Less is more.
