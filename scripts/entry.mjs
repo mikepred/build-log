@@ -5,6 +5,7 @@ import matter from 'gray-matter';
 import { ScriptError } from './errors.mjs';
 import { isContentEntryPath, slugFromEntryPath } from './entry-file.mjs';
 import { absolutizeSiteUrls, siteRootFromCanonical } from './absolute-urls.mjs';
+import { site, base } from './site-settings.mjs';
 
 /**
  * One parsed entry. Senders receive this object and do not read frontmatter.
@@ -46,6 +47,11 @@ export function entryFromFile(filePath) {
   if (!siteRoot) {
     throw new ScriptError(
       `${filePath}: canonical_url must end with /${slug}/ so site-relative URLs can be made absolute.`,
+    );
+  }
+  if (siteRoot.origin !== new URL(site).origin || siteRoot.base !== base.replace(/\/+$/, '')) {
+    throw new ScriptError(
+      `${filePath}: canonical_url must use the configured site origin and base (${site}${base}).`,
     );
   }
 

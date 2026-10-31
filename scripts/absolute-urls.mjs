@@ -58,11 +58,13 @@ export function absolutizeSiteUrls(markdown, { origin, base }) {
     if (node.type === 'inlineCode' || node.type === 'code') return slice(node);
     if (node.type === 'html') return rewriteHtml(slice(node));
     if (node.type === 'image') {
-      // Alt text is plain text with no child nodes, so only the destination
-      // (the tail from the last `](`) is rewritten; inline code in alt stays.
+      // Find the closing alt bracket, ignoring escaped brackets, nested
+      // brackets and code spans. A title can itself contain `](`.
       const source = slice(node);
-      const at = source.lastIndexOf('](');
-      return at < 0 ? source : source.slice(0, at) + rewriteDestinations(source.slice(at));
+      const at = imageDestinationOffset(source);
+      return at < 0 ? source : source.slice(0, at) + source.slice(at).replace(
+        new RegExp(destination[0].source), (_, lead, url) => `${lead}${origin}${url}`,
+      );
     }
     // Leaf nodes: a definition is all syntax, so its destination is rewritten.
     // Any other leaf (text, break, ...) is content and stays verbatim, so
@@ -86,6 +88,29 @@ export function absolutizeSiteUrls(markdown, { origin, base }) {
   // The root's position can stop short of trailing whitespace; keep it as-is.
   return markdown.slice(0, root.position.start.offset) + render(root, false) +
     markdown.slice(root.position.end.offset);
+}
+
+function imageDestinationOffset(source) {
+  let depth = 1;
+  for (let i = 2; i < source.length; i++) {
+    if (source[i] === '\\') { i++; continue; }
+    if (source[i] === '`') {
+      let end = i;
+      while (source[end] === '`') end++;
+      const ticks = source.slice(i, end);
+      let close = end;
+      while ((close = source.indexOf(ticks, close)) !== -1) {
+        if (source[close - 1] !== '`' && source[close + ticks.length] !== '`') break;
+        close += ticks.length;
+      }
+      if (close !== -1) { i = close + ticks.length - 1; continue; }
+      i = end - 1;
+      continue;
+    }
+    if (source[i] === '[') depth++;
+    if (source[i] === ']' && --depth === 0) return source[i + 1] === '(' ? i : -1;
+  }
+  return -1;
 }
 
 function escapeRegExp(value) {

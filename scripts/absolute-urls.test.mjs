@@ -156,6 +156,12 @@ test('leaves inline code in image alt text alone and rewrites only the destinati
   assert.equal(absolutizeSiteUrls(input, root), expected);
 });
 
+test('rewrites image destinations when the title contains image syntax', () => {
+  const input = '![chart](/build-log/images/a.svg "diagram ](detail") ![a [nested] b](/build-log/b.svg "x ](/build-log/not-a-url")';
+  const expected = `![chart](${abs}/images/a.svg "diagram ](detail") ![a [nested] b](${abs}/b.svg "x ](/build-log/not-a-url")`;
+  assert.equal(absolutizeSiteUrls(input, root), expected);
+});
+
 test('leaves escaped link syntax in link text alone', () => {
   assert.equal(
     absolutizeSiteUrls('[see \\](/build-log/x) here](/build-log/y)', root),
