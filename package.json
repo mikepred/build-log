@@ -10,7 +10,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "test": "node --test scripts/*.test.mjs"
+    "test:reviewers": "node --test scripts/reviewers/*.test.mjs",
+    "test": "node --test scripts/*.test.mjs scripts/reviewers/*.test.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.19",

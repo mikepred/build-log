@@ -1,0 +1,90 @@
+name: Antigravity Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
+        type: string
+      force:
+        description: 'Force review regardless of strategy'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  antigravity-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Resolve Multi-Agent Dispatcher
+        id: dispatch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+          REVIEW_STRATEGY: ${{ vars.AGENT_REVIEW_STRATEGY || 'all' }}
+          ACTIVE_AGENTS: ${{ vars.ACTIVE_REVIEW_AGENTS || 'claude,antigravity' }}
+          FORCE_RUN: ${{ github.event.inputs.force || 'false' }}
+        run: |
+          if [ "${FORCE_RUN}" = "true" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          PR_JSON=$(gh pr view "$PR_NUMBER" --json title,body,labels)
+          TITLE=$(echo "$PR_JSON" | jq -r '.title // ""')
+          BODY=$(echo "$PR_JSON" | jq -r '.body // ""')
+          LABELS=$(echo "$PR_JSON" | jq -c '.labels // []')
+
+          node -e "
+            import('./scripts/reviewers/dispatcher.mjs').then(({ resolveReviewers }) => {
+              const result = resolveReviewers({
+                prNumber: process.env.PR_NUMBER,
+                labels: JSON.parse(process.env.LABELS || '[]'),
+                title: process.env.TITLE,
+                body: process.env.BODY,
+                strategy: process.env.REVIEW_STRATEGY,
+                activeAgents: (process.env.ACTIVE_AGENTS || 'claude,antigravity').split(',')
+              });
+              console.log('Dispatch result:', JSON.stringify(result, null, 2));
+              const shouldRun = result.selectedAgents.includes('antigravity');
+              console.log('Should Antigravity run on PR #${PR_NUMBER}:', shouldRun);
+              const fs = await import('node:fs');
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, \`should_run=\${shouldRun}\n\`);
+            });
+          "
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TITLE: ${{ github.event.pull_request.title || '' }}
+          BODY: ${{ github.event.pull_request.body || '' }}
+
+      - name: Run Antigravity Review Agent
+        if: steps.dispatch.outputs.should_run == 'true'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+          GEMINI_MODEL: ${{ vars.GEMINI_REVIEW_MODEL || 'gemini-2.5-flash' }}
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "::warning ::GEMINI_API_KEY is not configured in repository secrets. Skipping Antigravity AI review."
+            exit 0
+          fi
+          node scripts/reviewers/antigravity-review.mjs --pr "$PR_NUMBER"

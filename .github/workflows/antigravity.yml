@@ -1,0 +1,47 @@
+name: Antigravity Assistant
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  antigravity:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@antigravity')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@antigravity')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@antigravity')) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@antigravity') || contains(github.event.issue.title, '@antigravity')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Respond to @antigravity mention
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_MODEL: ${{ vars.GEMINI_REVIEW_MODEL || 'gemini-2.5-flash' }}
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "::warning ::GEMINI_API_KEY is not configured in repository secrets."
+            exit 0
+          fi
+          node scripts/reviewers/antigravity-chat.mjs

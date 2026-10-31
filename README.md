@@ -138,6 +138,30 @@ Dry run, no network:
 node scripts/crosspost.mjs --dry-run content/2026-10-24-foo-bar.md
 ```
 
+## Automated Code Review Panel
+
+PRs are reviewed on repository events (`pull_request: [opened, synchronize, ready_for_review]`) by a multi-agent review panel:
+
+| Agent | Focus | Trigger / Workflow | Secret |
+| --- | --- | --- | --- |
+| **Cursor Bugbot** | Quick static & syntax check | GitHub integration | Configured via dashboard |
+| **Claude Code** | Security, code idioms, edge cases | `.github/workflows/claude-code-review.yml` | `CLAUDE_CODE_OAUTH_TOKEN` |
+| **Antigravity (Gemini)** | Architecture, Astro/TS patterns, correctness | `.github/workflows/antigravity-code-review.yml` | `GEMINI_API_KEY` |
+
+### Review Strategies
+
+Controlled via repository variable `AGENT_REVIEW_STRATEGY` (Settings → Secrets and variables → Actions → Variables):
+
+- `all` (default): All active agents review in parallel and post distinct comments.
+- `round-robin`: Alternates reviewers across PRs based on PR number (`claude` on odd/even alternating with `antigravity`).
+
+### Manual Overrides & Mentions
+
+- Tag a PR with `agent:antigravity`, `agent:claude`, or `agent:all` to override the strategy for that PR.
+- Add `[review:antigravity]`, `[review:claude]`, or `[review:all]` in the PR title or description.
+- Mention `@antigravity` in any PR comment, issue, or review to trigger an on-demand response or review (`.github/workflows/antigravity.yml`).
+- Test locally (dry run): `node scripts/reviewers/antigravity-review.mjs --pr <number> --dry-run`
+
 ## Licenses
 
 Two licenses, on purpose.
