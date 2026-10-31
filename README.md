@@ -74,7 +74,7 @@ npm run preview
 
 Pushes to `main` run [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). The workflow builds with the official [`withastro/action`](https://github.com/withastro/action) and deploys with [`actions/deploy-pages`](https://github.com/actions/deploy-pages). You can also run that workflow by hand from the Actions tab.
 
-`astro.config.ts` sets `site` to `https://mikepred.github.io` and `base` to `/build-log`.
+`scripts/site-settings.mjs` sets `site` to `https://mikepred.github.io` and `base` to `/build-log` for both Astro and cross-post validation.
 
 One-time setup: on GitHub, open **Settings → Pages** and set the source to **GitHub Actions**. Until that is set, the workflow has nowhere to publish.
 

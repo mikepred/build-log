@@ -24,7 +24,8 @@ process warns and exits 0.`;
  *   plan(entry, previous): { operation, request, notes }
  *   publish({ entry, previous }): Promise<{ id, url, action } | { failed: true }>
  * plan must not use the network. A sender that returns { failed: true } is logged
- * by that sender and does not fail the run or write sync-state.
+ * by that sender and writes no sync-state. The other senders still run, but the
+ * run exits non-zero so the failure isn't hidden behind a green check.
  */
 async function loadSenders() {
   const directory = fileURLToPath(new URL('./senders/', import.meta.url));
@@ -131,7 +132,11 @@ async function main() {
           entry,
           previous: previousFor(state, entry.slug, sender.id),
         });
-        if (remote?.failed) continue;
+        if (remote?.failed) {
+          // The sender already logged the details. Count it so the run ends red.
+          failures.push(`${sender.id} ${entry.file}: ${remote.message ?? 'failed'}`);
+          continue;
+        }
         rememberRemote(state, entry.slug, sender.id, remote);
         saveSyncState(state);
         const verb = remote.action === 'create' ? 'Created' : 'Updated';

@@ -1,9 +1,10 @@
 import sitemap from '@astrojs/sitemap';
 import { defineConfig } from 'astro/config';
+import { site, base } from './scripts/site-settings.mjs';
 
 export default defineConfig({
-  site: 'https://mikepred.github.io',
-  base: '/build-log',
+  site,
+  base,
   trailingSlash: 'always',
   integrations: [sitemap()],
   markdown: {
