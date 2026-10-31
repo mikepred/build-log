@@ -26,91 +26,61 @@ export function siteRootFromCanonical(canonicalUrl, slug) {
 /**
  * Rewrite root-relative URLs under `base` (including the bare base itself)
  * to `${origin}${path}` in link, image, and definition destinations and in raw
- * HTML src/href. The markdown is parsed (CommonMark) to find those nodes, and
- * only their source ranges are edited, so everything else (code blocks,
- * inline code, indentation, blockquotes) is kept byte-for-byte.
+ * HTML src/href. The markdown is parsed (CommonMark), and the parser reports
+ * the exact source range of every destination, so only those ranges (and raw
+ * HTML nodes) are edited. Titles, labels, alt text, code blocks, inline code,
+ * indentation and blockquotes are kept byte-for-byte.
  */
 export function absolutizeSiteUrls(markdown, { origin, base }) {
+  const underBase = base === '' ? /^\/(?!\/)/ : new RegExp(`^${escapeRegExp(base)}(?:[/?#]|$)`);
   const path =
     base === ''
       ? `/(?!/)[^\\s)"'<>]*`
       : `${escapeRegExp(base)}(?:[/?#][^\\s)"'<>]*)?(?=[\\s)"'<>]|$)`;
-  const destination = [
-    // ](/base/...) for links and images, optionally <wrapped>
-    new RegExp(`(\\]\\(\\s*<?)(${path})`, 'g'),
-    // [ref]: /base/...
-    new RegExp(`(^\\[[^\\]\\n]+\\]:\\s*<?)(${path})`, 'g'),
-  ];
-  const html = [new RegExp(`(\\b(?:src|href)\\s*=\\s*["']?)(${path})`, 'gi')];
-  const apply = (patterns) => (text) =>
-    patterns.reduce((out, re) => out.replace(re, (_, lead, url) => `${lead}${origin}${url}`), text);
+  const htmlUrl = new RegExp(`(\\b(?:src|href)\\s*=\\s*["']?)(${path})`, 'gi');
 
-  const rewriteDestinations = apply(destination);
-  const rewriteHtml = apply(html);
-  const slice = (node) => markdown.slice(node.position.start.offset, node.position.end.offset);
-
-  // Render one node's source. Inside a link, image, or definition, the text
-  // between children (the node's own syntax) gets the destination patterns,
-  // and each child is rendered on its own: inline code verbatim, raw HTML with
-  // the src/href patterns, nested links and images recursively. Every byte is
-  // emitted exactly once, so nested edits are never dropped.
-  const render = (node, inUrlNode) => {
-    if (node.type === 'inlineCode' || node.type === 'code') return slice(node);
-    if (node.type === 'html') return rewriteHtml(slice(node));
-    if (node.type === 'image') {
-      // Find the closing alt bracket, ignoring escaped brackets, nested
-      // brackets and code spans. A title can itself contain `](`.
-      const source = slice(node);
-      const at = imageDestinationOffset(source);
-      return at < 0 ? source : source.slice(0, at) + source.slice(at).replace(
-        new RegExp(destination[0].source), (_, lead, url) => `${lead}${origin}${url}`,
-      );
-    }
-    // Leaf nodes: a definition is all syntax, so its destination is rewritten.
-    // Any other leaf (text, break, ...) is content and stays verbatim, so
-    // escaped text like `\](/build-log/x)` inside a link label is never touched.
-    if (!node.children) return node.type === 'definition' ? rewriteDestinations(slice(node)) : slice(node);
-    const urlNode = node.type === 'link';
-    const children = node.children;
-    const gap = urlNode || inUrlNode ? rewriteDestinations : (text) => text;
-    let out = '';
-    let cursor = node.position.start.offset;
-    for (const child of children) {
-      if (!child.position) continue;
-      out += gap(markdown.slice(cursor, child.position.start.offset)) + render(child, urlNode || inUrlNode);
-      cursor = child.position.end.offset;
-    }
-    return out + gap(markdown.slice(cursor, node.position.end.offset));
+  // [start, end, replacement] edits on the original source.
+  const edits = [];
+  const destination = (start, end) => {
+    if (underBase.test(markdown.slice(start, end))) edits.push([start, start, origin]);
   };
+  // micromark tokens for destinations: the raw form is the URL itself, the
+  // literal form is <URL> with its angle brackets. from-markdown has no
+  // handlers for these token types, so hooking them changes nothing else.
+  const raw = (token) => destination(token.start.offset, token.end.offset);
+  const literal = (token) => destination(token.start.offset + 1, token.end.offset - 1);
+  const root = fromMarkdown(markdown, {
+    mdastExtensions: [{
+      enter: {
+        resourceDestinationRaw: raw,
+        resourceDestinationLiteral: literal,
+        definitionDestinationRaw: raw,
+        definitionDestinationLiteral: literal,
+      },
+    }],
+  });
 
-  const root = fromMarkdown(markdown);
-  if (!root.position) return markdown;
-  // The root's position can stop short of trailing whitespace; keep it as-is.
-  return markdown.slice(0, root.position.start.offset) + render(root, false) +
-    markdown.slice(root.position.end.offset);
-}
-
-function imageDestinationOffset(source) {
-  let depth = 1;
-  for (let i = 2; i < source.length; i++) {
-    if (source[i] === '\\') { i++; continue; }
-    if (source[i] === '`') {
-      let end = i;
-      while (source[end] === '`') end++;
-      const ticks = source.slice(i, end);
-      let close = end;
-      while ((close = source.indexOf(ticks, close)) !== -1) {
-        if (source[close - 1] !== '`' && source[close + ticks.length] !== '`') break;
-        close += ticks.length;
-      }
-      if (close !== -1) { i = close + ticks.length - 1; continue; }
-      i = end - 1;
-      continue;
+  // Raw HTML (block or inline, including inside link labels) gets the
+  // src/href rewrite. Code nodes are never html nodes, so they stay verbatim.
+  const visit = (node) => {
+    if (node.type === 'html' && node.position) {
+      const { start, end } = node.position;
+      const source = markdown.slice(start.offset, end.offset);
+      const rewritten = source.replace(htmlUrl, (_, lead, url) => `${lead}${origin}${url}`);
+      if (rewritten !== source) edits.push([start.offset, end.offset, rewritten]);
     }
-    if (source[i] === '[') depth++;
-    if (source[i] === ']' && --depth === 0) return source[i + 1] === '(' ? i : -1;
+    for (const child of node.children ?? []) visit(child);
+  };
+  visit(root);
+
+  edits.sort((a, b) => a[0] - b[0]);
+  let out = '';
+  let cursor = 0;
+  for (const [start, end, text] of edits) {
+    out += markdown.slice(cursor, start) + text;
+    cursor = end;
   }
-  return -1;
+  return out + markdown.slice(cursor);
 }
 
 function escapeRegExp(value) {

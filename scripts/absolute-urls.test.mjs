@@ -168,3 +168,42 @@ test('leaves escaped link syntax in link text alone', () => {
     `[see \\](/build-log/x) here](${abs}/y)`,
   );
 });
+
+test('rewrites only the destination, never link or definition titles', () => {
+  const input = [
+    '[a](/build-log/x "see ](/build-log/y)")',
+    '[a](/build-log/x (see ](/build-log/y)))',
+    "[a](</build-log/x> 'see ](/build-log/y)')",
+    '',
+    '[ref]: /build-log/x "](/build-log/y)"',
+    "[ref2]: </build-log/x> '](/build-log/y)'",
+  ].join('\n');
+  const expected = [
+    `[a](${abs}/x "see ](/build-log/y)")`,
+    `[a](${abs}/x (see ](/build-log/y)))`,
+    `[a](<${abs}/x> 'see ](/build-log/y)')`,
+    '',
+    `[ref]: ${abs}/x "](/build-log/y)"`,
+    `[ref2]: <${abs}/x> '](/build-log/y)'`,
+  ].join('\n');
+  assert.equal(absolutizeSiteUrls(input, root), expected);
+});
+
+test('rewrites an image destination when a backtick in the alt text is not a code span', () => {
+  // The alt's backtick sits inside raw HTML or an autolink, so it can't open
+  // a code span with the backtick in the title: these are real images.
+  const input = '![<span title="`">](/build-log/x.png "`") ![<http://a.b/`>](/build-log/y.png "`")';
+  const expected = `![<span title="\`">](${abs}/x.png "\`") ![<http://a.b/\`>](${abs}/y.png "\`")`;
+  assert.equal(absolutizeSiteUrls(input, root), expected);
+  // Here the backticks do pair up, so CommonMark reads a code span, not an
+  // image, and the text is left exactly as written.
+  const code = '![a `b](/build-log/x.png "c`d")';
+  assert.equal(absolutizeSiteUrls(code, root), code);
+});
+
+test('rewrites destinations with balanced parens and escapes as a whole', () => {
+  assert.equal(
+    absolutizeSiteUrls('[a](/build-log/x(1)\\)y "t") ![b](  /build-log/z.png  )', root),
+    `[a](${abs}/x(1)\\)y "t") ![b](  ${abs}/z.png  )`,
+  );
+});
