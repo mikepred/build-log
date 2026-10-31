@@ -1,64 +1,62 @@
 # build-log
 
-Case notes from real work: things that broke, how I tracked them down, and what I changed so they don't break again. Windows, automation, AI agents, and dev tooling. Each entry has a quick case file, the story, and copy-paste steps to do it yourself.
+Case notes from real work: things that broke, how I tracked them down, and what I changed so they don't break again. Windows, automation, AI agents, and dev tooling. Each post has a quick case file, the story, and copy-paste steps to do it yourself.
 
-This repository is the source for that log. It builds a small static site and publishes it at <https://mikepred.github.io/build-log/>. There is no analytics, newsletter, affiliate links, comments, or calls to action.
+This repo is the source. Read it here:
 
-## Entries
+- Site (the original): <https://mikepred.github.io/build-log/>
+- dev.to: <https://dev.to/mikepred>
+- Hashnode: <https://mikepred.hashnode.dev>
+- RSS: <https://mikepred.github.io/build-log/rss.xml>
 
-One Markdown file per entry, directly in `content/` at the repo root (not under `src/`):
+No analytics, newsletter, affiliate links, or calls to action.
 
-```text
-content/YYYY-MM-DD-slug.md
-```
+## What's where
 
-The date prefix is only the filename. The public URL drops it, along with `.md`:
+| Path | What it is |
+| --- | --- |
+| `content/` | Posts, one Markdown file each: `content/YYYY-MM-DD-slug.md`. The only originals. |
+| `log/` | The [running log](https://mikepred.github.io/build-log/log/): short dated notes, site only. |
+| `social/` | Draft social posts for each post, one folder per slug. Not published by anything here. |
+| `src/` | The Astro site: layout, pages, RSS feed, and the per-post social card renderer (font in `src/assets/fonts/`, SIL OFL). |
+| `scripts/` | Cross-posting (`crosspost.mjs` plus one sender per platform in `senders/`) and its tests. |
+| `public/` | Static files: images, favicon, `og-default.png`, `robots.txt`. |
 
-`content/2026-10-24-foo-bar.md` → `https://mikepred.github.io/build-log/foo-bar/`
+## How publishing works
 
-`tags`, `index`, `404`, `rss.xml`, and `log` are reserved slugs.
+- **Merge to `main` deploys the site.** GitHub Actions builds it with Astro and pushes it to GitHub Pages.
+- **The same push cross-posts.** [`scripts/crosspost.mjs`](scripts/crosspost.mjs) looks at files in `content/` that were added or changed in that push and sends each one to dev.to and Hashnode with the post's `canonical_url`, so both point back to the site. Pushes that don't touch `content/` just find nothing to send.
+- **`log/**` is ignored by the cross-post workflow,** so a log-only push just redeploys the site.
+- Site-relative links and images (like `/build-log/images/…`) are rewritten to absolute site URLs in the copies, so they still work on dev.to and Hashnode. The site itself renders the original Markdown.
+- Edit a post here and the push that changes it updates the copies. Edits made on dev.to or Hashnode get overwritten the next time that post's file changes.
+- Remote post ids live in [`sync-state.json`](sync-state.json). The workflow commits it back with `[skip ci]`, so it doesn't loop.
 
-Frontmatter:
+The site also ships a sitemap (`sitemap-index.xml`), an RSS feed of posts (no log notes), and Open Graph/Twitter cards plus JSON-LD on every post. Each post gets its own 1200x630 share image (title, date, tags), rendered at build time to `/og/<slug>.png`. Other pages use `og-default.png`.
 
-| Field | Type | Role |
-| --- | --- | --- |
-| `title` | string | Entry title |
-| `date` | date | Sort and display date |
-| `tags` | string array | Index, tag pages, and the feed |
-| `summary` | string | Index blurb, meta description, dev.to description, and Hashnode subtitle |
-| `canonical_url` | URL string | `<link rel="canonical">` on the entry page, and the canonical URL sent to dev.to and Hashnode |
+## One-time setup
 
-~~~~markdown
+- **Pages source:** in **Settings → Pages**, set the source to **GitHub Actions**. Until then the deploy workflow has nowhere to publish.
+- **Actions secrets** (Settings → Secrets and variables → Actions): `DEVTO_API_KEY` for dev.to, `HASHNODE_TOKEN` and `HASHNODE_PUBLICATION_ID` for Hashnode. A sender with a missing secret warns and is skipped; the site deploy doesn't use them.
+- **A rejected send fails the run.** If dev.to or Hashnode rejects a post (auth, plan, or API error), the error goes to the job log (Hashnode also adds a `Hashnode FAILED: …` line to the step summary). That post isn't written to `sync-state.json` for that site, the other senders and posts still run, and then the job exits non-zero so the check goes red. Successful sends from the same run are still committed to `sync-state.json`.
+- **Adding a platform:** add one file in `scripts/senders/` that exports `id`, `disabledReason`, `plan`, and `publish`. `plan` must not touch the network.
+
+## Post frontmatter
+
+All five fields are required:
+
+```markdown
 ---
-title: Scheduled task that never fired
-date: 2026-10-24
-tags:
-  - powershell
-  - windows
-summary: The task was registered, but the trigger used a local time the box didn't have.
-canonical_url: https://mikepred.github.io/build-log/scheduled-task-that-never-fired/
+title: "Scheduled task that never fired"
+date: 2026-10-24          # the day it's published
+tags: [powershell, windows]   # 4 max (dev.to's limit)
+summary: "One or two sentences. Used as the meta description, dev.to description and Hashnode subtitle."
+canonical_url: "https://mikepred.github.io/build-log/scheduled-task-that-never-fired/"
 ---
-
-What broke, how it was tracked down, and the change that kept it from breaking again.
-
-```powershell
-Get-ScheduledTask -TaskName 'Nightly' | Format-List State, TaskPath
 ```
-~~~~
 
-Set `canonical_url` to the entry's URL on this site and leave it stable. dev.to and Hashnode treat that URL as the article's identity. Hashnode shows it as "originally published at".
+The filename's date prefix is dropped from the URL: `content/2026-10-24-foo-bar.md` → `/build-log/foo-bar/`. Keep `canonical_url` pointing at that URL and don't change it later; dev.to and Hashnode use it as the post's identity. `tags`, `index`, `404`, `rss.xml`, and `log` are reserved slugs.
 
-The index lists entries newest first, with title, date, summary, and tags. Each tag links to `/build-log/tags/<tag>/`.
-
-`content/.gitkeep` keeps the folder in git when there are no posts. The site builds with an empty collection. Astro prints warnings that there are no entries; the build still exits successfully.
-
-## Running log
-
-Short dated notes live in `log/` at the repo root, one Markdown file per note, and render newest first at <https://mikepred.github.io/build-log/log/>.
-
-```text
-log/YYYY-MM-DD-anything.md
-```
+Log notes are lighter:
 
 ```markdown
 ---
@@ -69,81 +67,18 @@ title: optional heading
 a few casual lines about what happened.
 ```
 
-Notes are outside `content/`, so they are never cross-posted. `log/**` is in the cross-post workflow's `paths-ignore`, and a push that only adds a note just redeploys the site. `log` is a reserved slug.
+## Run it locally
 
-## Run locally
-
-Requires Node.js 22.23.4 or newer.
+Node.js 22.23.4 or newer.
 
 ```bash
 npm install
-npm run dev
-```
-
-The dev server serves the site under `/build-log/`.
-
-```bash
-npm run build
-npm run preview
-```
-
-`npm run build` writes the static site to `dist/`.
-
-## Deploy
-
-Pushes to `main` run [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). The workflow builds with the official [`withastro/action`](https://github.com/withastro/action) and deploys with [`actions/deploy-pages`](https://github.com/actions/deploy-pages). You can also run that workflow by hand from the Actions tab.
-
-`scripts/site-settings.mjs` sets `site` to `https://mikepred.github.io` and `base` to `/build-log` for both Astro and cross-post validation.
-
-One-time setup: on GitHub, open **Settings → Pages** and set the source to **GitHub Actions**. Until that is set, the workflow has nowhere to publish.
-
-The feed is <https://mikepred.github.io/build-log/rss.xml>. The sitemap is generated by `@astrojs/sitemap`.
-
-## Publishing
-
-The markdown in `content/` is the only original. The site, dev.to, and Hashnode are copies generated from the merged file. Edit an entry in the repo and the next push to `main` re-syncs those copies. Edits made on a platform are overwritten.
-
-A push to `main` deploys the site and runs [`scripts/crosspost.mjs`](scripts/crosspost.mjs). The runner finds entries added or changed in that push and sends each one through every enabled sender in [`scripts/senders/`](scripts/senders/). The site deploy does not wait on cross-posting.
-
-| Target | How | Actions secret |
-| --- | --- | --- |
-| Site | GitHub Pages workflow | none |
-| dev.to | `devto.mjs` | `DEVTO_API_KEY` |
-| Hashnode | `hashnode.mjs` | `HASHNODE_TOKEN`, `HASHNODE_PUBLICATION_ID` |
-
-Those names are repository Actions secrets (Settings → Secrets and variables → Actions). `HASHNODE_TOKEN` is sent as the Hashnode `Authorization` header (the token itself, not a `Bearer` prefix). If a platform's secret is missing, that sender warns and is skipped. When every sender is skipped, the run exits 0. The site deploy does not use them. Hashnode's API needs a Pro plan on the publication ([announcement](https://hashnode.com/announcements/graphql-api), May 13, 2026).
-
-dev.to receives the summary as the description and the body as `body_markdown`. Hashnode receives the summary as the subtitle, the body as `contentMarkdown`, and `canonical_url` as `originalArticleURL`. A Hashnode auth, plan, or API error is one line, `Hashnode FAILED: …`, in the job log and the step summary. That entry is not written to `sync-state.json`, the other senders still run, and the job exits 0.
-
-Remote ids live in [`sync-state.json`](sync-state.json) at the repo root, keyed by entry slug. They are not written into frontmatter.
-
-```json
-{
-  "foo-bar": {
-    "devto": { "id": "123", "url": "https://dev.to/example/foo-bar" },
-    "hashnode": { "id": "…", "url": "https://blog.example/foo-bar" }
-  }
-}
-```
-
-A later edit updates those ids and does not create another copy. dev.to looks up an existing article by `canonical_url` when the id is missing. Hashnode looks up the publication's posts and updates one with the same `originalArticleURL` or slug. After the runner finishes, including when one sender fails after another has already stored an id, the workflow commits `sync-state.json` to `main` with the message `chore: update cross-post sync state [skip ci]`. That commit does not deploy the site or cross-post again.
-
-To add a platform, add one file in `scripts/senders/`. Export `id`, `disabledReason`, `plan`, and `publish`. `plan` must not use the network. Leave the entry frontmatter alone.
-
-An Obsidian vault can be a clone of this repo. Open the repo folder as a vault. `content/` holds the entries, so no sync plugin is required.
-
-Dry run, no network:
-
-```bash
-node scripts/crosspost.mjs --dry-run content/2026-10-24-foo-bar.md
+npm run dev       # serves under /build-log/
+npm run build     # writes dist/
+npm test          # cross-post script tests
+node scripts/crosspost.mjs --dry-run content/2026-10-24-foo-bar.md   # no network
 ```
 
 ## Licenses
 
-Two licenses, on purpose.
-
-Code and snippets in this repository, including the site and the commands inside entries, are [MIT](LICENSE). Copyright holder: mikepred.
-
-The posts themselves (the Markdown entries in `content/`) are [CC BY 4.0](LICENSE-content).
-
-The site footer states the same split: code and snippets MIT, posts CC BY 4.0.
+Code and snippets (including the commands inside posts) are [MIT](LICENSE). The posts themselves in `content/` are [CC BY 4.0](LICENSE-content).
