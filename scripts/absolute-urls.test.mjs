@@ -129,3 +129,23 @@ test('site at the domain root rewrites any root-relative path', () => {
   });
   assert.equal(out, '![x](https://example.com/images/x.svg) [p](//cdn.example.com/x)');
 });
+
+test('rewrites raw html nested inside links as well as the link itself', () => {
+  const input = [
+    '[<img src="/build-log/x.svg">](/build-log/y/)',
+    '[<img src="/build-log/a.svg" alt="a"> and <a href=\'/build-log\'>home</a>](/build-log)',
+    '[![i](/build-log/i.svg) <img src="/build-log/j.svg">](/build-log/k/)',
+    '[`<img src="/build-log/code.svg">` <img src="/build-log/real.svg">](/build-log/z/)',
+  ].join('\n\n');
+  const expected = [
+    `[<img src="${abs}/x.svg">](${abs}/y/)`,
+    `[<img src="${abs}/a.svg" alt="a"> and <a href='${abs}'>home</a>](${abs})`,
+    `[![i](${abs}/i.svg) <img src="${abs}/j.svg">](${abs}/k/)`,
+    `[\`<img src="/build-log/code.svg">\` <img src="${abs}/real.svg">](${abs}/z/)`,
+  ].join('\n\n');
+  assert.equal(absolutizeSiteUrls(input, root), expected);
+});
+
+test('returns empty and whitespace-only input unchanged', () => {
+  for (const input of ['', '\n', '  \n\n']) assert.equal(absolutizeSiteUrls(input, root), input);
+});

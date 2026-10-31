@@ -45,55 +45,36 @@ export function absolutizeSiteUrls(markdown, { origin, base }) {
   const apply = (patterns) => (text) =>
     patterns.reduce((out, re) => out.replace(re, (_, lead, url) => `${lead}${origin}${url}`), text);
 
-  const edits = [];
-  const visit = (node) => {
-    const pos = node.position;
-    if (pos && (node.type === 'link' || node.type === 'image' || node.type === 'definition')) {
-      // Rewrite the node's own syntax but not text inside inline code in a link label.
-      const skip = [];
-      collect(node, 'inlineCode', skip);
-      edits.push({ start: pos.start.offset, end: pos.end.offset, skip, fn: apply(destination) });
-      for (const child of node.children ?? []) if (child.type !== 'inlineCode') visit(child);
-      return;
+  const rewriteDestinations = apply(destination);
+  const rewriteHtml = apply(html);
+  const slice = (node) => markdown.slice(node.position.start.offset, node.position.end.offset);
+
+  // Render one node's source. Inside a link, image, or definition, the text
+  // between children (the node's own syntax) gets the destination patterns,
+  // and each child is rendered on its own: inline code verbatim, raw HTML with
+  // the src/href patterns, nested links and images recursively. Every byte is
+  // emitted exactly once, so nested edits are never dropped.
+  const render = (node, inUrlNode) => {
+    if (node.type === 'inlineCode' || node.type === 'code') return slice(node);
+    if (node.type === 'html') return rewriteHtml(slice(node));
+    const urlNode = node.type === 'link' || node.type === 'image' || node.type === 'definition';
+    const children = node.children ?? [];
+    const gap = urlNode || inUrlNode ? rewriteDestinations : (text) => text;
+    let out = '';
+    let cursor = node.position.start.offset;
+    for (const child of children) {
+      if (!child.position) continue;
+      out += gap(markdown.slice(cursor, child.position.start.offset)) + render(child, urlNode || inUrlNode);
+      cursor = child.position.end.offset;
     }
-    if (pos && node.type === 'html') {
-      edits.push({ start: pos.start.offset, end: pos.end.offset, skip: [], fn: apply(html) });
-      return;
-    }
-    for (const child of node.children ?? []) visit(child);
+    return out + gap(markdown.slice(cursor, node.position.end.offset));
   };
-  visit(fromMarkdown(markdown));
 
-  // Nested nodes (an image inside a link) overlap; keep outer ranges and
-  // skip inner ones, since the outer rewrite already covers their text.
-  edits.sort((a, b) => a.start - b.start || b.end - a.end);
-  let out = '';
-  let cursor = 0;
-  for (const edit of edits) {
-    if (edit.start < cursor) continue;
-    out += markdown.slice(cursor, edit.start) + rewriteRange(markdown, edit);
-    cursor = edit.end;
-  }
-  return out + markdown.slice(cursor);
-}
-
-function rewriteRange(markdown, { start, end, skip, fn }) {
-  let out = '';
-  let cursor = start;
-  for (const node of skip) {
-    const s = node.position.start.offset;
-    const e = node.position.end.offset;
-    out += fn(markdown.slice(cursor, s)) + markdown.slice(s, e);
-    cursor = e;
-  }
-  return out + fn(markdown.slice(cursor, end));
-}
-
-function collect(node, type, into) {
-  for (const child of node.children ?? []) {
-    if (child.type === type) into.push(child);
-    else collect(child, type, into);
-  }
+  const root = fromMarkdown(markdown);
+  if (!root.position) return markdown;
+  // The root's position can stop short of trailing whitespace; keep it as-is.
+  return markdown.slice(0, root.position.start.offset) + render(root, false) +
+    markdown.slice(root.position.end.offset);
 }
 
 function escapeRegExp(value) {
