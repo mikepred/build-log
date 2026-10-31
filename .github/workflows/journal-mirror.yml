@@ -1,0 +1,36 @@
+name: Sync journal mirror
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - sync-state.json
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: journal-mirror
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Sync latest main, retrying if it advances
+        run: |
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git checkout --detach FETCH_HEAD
+            if node scripts/journal-snapshot.mjs; then exit 0; fi
+          done
+          exit 1
+        env:
+          JOURNAL_URL: https://build-log.mikepred.chatgpt.site
+          JOURNAL_SITE_ACCESS: ${{ secrets.JOURNAL_SITE_ACCESS }}
+          JOURNAL_SYNC_SECRET: ${{ secrets.JOURNAL_SYNC_SECRET }}

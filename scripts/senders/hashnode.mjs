@@ -1,7 +1,9 @@
 import { appendFileSync } from 'node:fs';
 import { HashnodeApiError } from '../errors.mjs';
 
-const ENDPOINT = 'https://gql.hashnode.com';
+// Hashnode retired gql.hashnode.com (it 301s to a paid-API notice); the
+// official @hashnode/cli uses gql-beta.hashnode.com.
+const ENDPOINT = 'https://gql-beta.hashnode.com';
 const USER_AGENT = 'mikepred-build-log';
 const PAGE_SIZE = 50;
 const MAX_PAGES = 40;
