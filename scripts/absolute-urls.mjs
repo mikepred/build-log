@@ -57,6 +57,13 @@ export function absolutizeSiteUrls(markdown, { origin, base }) {
   const render = (node, inUrlNode) => {
     if (node.type === 'inlineCode' || node.type === 'code') return slice(node);
     if (node.type === 'html') return rewriteHtml(slice(node));
+    if (node.type === 'image') {
+      // Alt text is plain text with no child nodes, so only the destination
+      // (the tail from the last `](`) is rewritten; inline code in alt stays.
+      const source = slice(node);
+      const at = source.lastIndexOf('](');
+      return at < 0 ? source : source.slice(0, at) + rewriteDestinations(source.slice(at));
+    }
     const urlNode = node.type === 'link' || node.type === 'image' || node.type === 'definition';
     const children = node.children ?? [];
     const gap = urlNode || inUrlNode ? rewriteDestinations : (text) => text;

@@ -149,3 +149,9 @@ test('rewrites raw html nested inside links as well as the link itself', () => {
 test('returns empty and whitespace-only input unchanged', () => {
   for (const input of ['', '\n', '  \n\n']) assert.equal(absolutizeSiteUrls(input, root), input);
 });
+
+test('leaves inline code in image alt text alone and rewrites only the destination', () => {
+  const input = '![`](/build-log/x)`](/build-log/images/o.png) ![`](/build-log/x)`](/other.png)';
+  const expected = `![\`](/build-log/x)\`](${abs}/images/o.png) ![\`](/build-log/x)\`](/other.png)`;
+  assert.equal(absolutizeSiteUrls(input, root), expected);
+});
