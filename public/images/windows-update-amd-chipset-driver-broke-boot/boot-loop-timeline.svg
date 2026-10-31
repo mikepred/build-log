@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 330" width="880" height="330" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+<title id="t">How one Windows Update driver broke boot</title><desc id="d">Six steps in order: a fresh Windows 11 Pro install; Gigabyte chipset and NVIDIA Studio drivers; Windows Update installs AMD - System 20.50.0.0 at 3:07 AM; restart into a black screen and a boot loop ending in Automatic Repair; Startup Repair uninstalls that driver and Continue boots; ExcludeWUDriversInQualityUpdate set to 1 so Windows Update stops sending drivers.</desc>
+<rect width="880" height="330" rx="12" fill="#fbfaf7"/>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker></defs>
+<text x="40" y="44" font-size="20" font-weight="600" fill="#1f2328">One driver, one boot loop, one policy</text>
+<g font-size="13" text-anchor="middle">
+<rect x="40" y="80" width="240" height="84" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="160" y="108" font-weight="600" fill="#1f2328">1. Fresh Windows 11 Pro</text>
+<text x="160" y="130" fill="#57606a">clean install</text>
+<rect x="320" y="80" width="240" height="84" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="440" y="108" font-weight="600" fill="#1f2328">2. Vendor drivers</text>
+<text x="440" y="130" fill="#57606a">Gigabyte chipset package,</text>
+<text x="440" y="148" fill="#57606a">NVIDIA Studio driver</text>
+<rect x="600" y="80" width="240" height="84" rx="8" fill="#fff8c5" stroke="#9a6700" stroke-width="1.5"/>
+<text x="720" y="108" font-weight="600" fill="#1f2328">3. Windows Update, 3:07 AM</text>
+<text x="720" y="130" fill="#57606a">installs "AMD - System 20.50.0.0"</text>
+<text x="720" y="148" fill="#57606a">for the PCIe root ports</text>
+<rect x="600" y="210" width="240" height="84" rx="8" fill="#ffebe9" stroke="#cf222e" stroke-width="1.5"/>
+<text x="720" y="238" font-weight="600" fill="#1f2328">4. Boot loop</text>
+<text x="720" y="260" fill="#57606a">black screen after restart,</text>
+<text x="720" y="278" fill="#57606a">then Automatic Repair</text>
+<rect x="320" y="210" width="240" height="84" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="440" y="238" font-weight="600" fill="#1f2328">5. Startup Repair</text>
+<text x="440" y="260" fill="#57606a">SrtTrail.txt blames the driver;</text>
+<text x="440" y="278" fill="#57606a">it's uninstalled, Continue boots</text>
+<rect x="40" y="210" width="240" height="84" rx="8" fill="#dafbe1" stroke="#1a7f37" stroke-width="1.5"/>
+<text x="160" y="238" font-weight="600" fill="#1f2328">6. Prevention</text>
+<text x="160" y="260" font-size="12" fill="#57606a">ExcludeWUDriversInQualityUpdate = 1</text>
+<text x="160" y="278" fill="#57606a">Windows Update sends no drivers</text>
+</g>
+<g stroke="#57606a" stroke-width="1.5" marker-end="url(#a)">
+<line x1="282" y1="122" x2="316" y2="122"/>
+<line x1="562" y1="122" x2="596" y2="122"/>
+<line x1="720" y1="166" x2="720" y2="206"/>
+<line x1="598" y1="252" x2="564" y2="252"/>
+<line x1="318" y1="252" x2="284" y2="252"/>
+</g>
+</svg>

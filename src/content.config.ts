@@ -23,4 +23,16 @@ const entries = defineCollection({
   }),
 });
 
-export const collections = { entries };
+/**
+ * Running log: short dated notes in log/YYYY-MM-DD-anything.md at the repo root.
+ * Outside content/, so the cross-post script never sees them.
+ */
+const log = defineCollection({
+  loader: glob({ pattern: '*.md', base: './log' }),
+  schema: z.object({
+    date: z.coerce.date(),
+    title: z.string().optional(),
+  }),
+});
+
+export const collections = { entries, log };
