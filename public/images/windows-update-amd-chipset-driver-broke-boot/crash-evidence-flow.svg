@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 360" width="880" height="360" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
-<title id="t">How crash evidence survives now</title><desc id="d">Two paths. Blue screen: AutoReboot is off, so the stop code stays on screen for a photo; the crash data waits in the page file; the next successful boot writes MEMORY.DMP and a minidump; a startup task one minute later copies them to C:\CrashVault. Hang with no blue screen: boot logging writes ntbtlog.txt, and the last driver listed is the suspect.</desc>
+<title id="t">How crash evidence survives now</title><desc id="d">Two paths. Blue screen: AutoReboot is off, so the stop code stays on screen for a photo; the crash data waits in the page file; the next successful boot writes MEMORY.DMP and a minidump; a startup task one minute later copies them to C:\CrashVault. Hang with no blue screen: boot logging appends a section per boot to ntbtlog.txt; compare the failed boot's section with a Safe Mode boot, and treat drivers that only load normally as leads.</desc>
 <rect width="880" height="360" rx="12" fill="#fbfaf7"/>
 <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker></defs>
 <text x="40" y="44" font-size="20" font-weight="600" fill="#1f2328">Catching the evidence before it disappears</text>
@@ -27,12 +27,12 @@
 <text x="132" y="300" fill="#57606a">nothing to photograph</text>
 <rect x="250" y="250" width="185" height="84" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
 <text x="342" y="278" font-weight="600" fill="#1f2328">Boot log</text>
-<text x="342" y="300" fill="#57606a">bcdedit bootlog yes writes</text>
-<text x="342" y="318" fill="#57606a">C:\Windows\ntbtlog.txt</text>
+<text x="342" y="300" fill="#57606a">ntbtlog.txt gets one</text>
+<text x="342" y="318" fill="#57606a">section per boot</text>
 <rect x="460" y="250" width="185" height="84" rx="8" fill="#dafbe1" stroke="#1a7f37" stroke-width="1.5"/>
-<text x="552" y="278" font-weight="600" fill="#1f2328">Suspect named</text>
-<text x="552" y="300" fill="#57606a">the last driver listed</text>
-<text x="552" y="318" fill="#57606a">is where to look</text>
+<text x="552" y="278" font-weight="600" fill="#1f2328">Compare with Safe Mode</text>
+<text x="552" y="300" fill="#57606a">drivers only in the normal</text>
+<text x="552" y="318" fill="#57606a">boot are leads</text>
 </g>
 <g stroke="#57606a" stroke-width="1.5" marker-end="url(#a)">
 <line x1="227" y1="138" x2="246" y2="138"/>

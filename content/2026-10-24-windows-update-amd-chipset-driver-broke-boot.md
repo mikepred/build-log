@@ -37,10 +37,10 @@ Losing that dump bugged me, though, so I asked the follow-up question: if this h
 
 - keeps the memory dump even when disk space is low, and saves an automatic memory dump (`MEMORY.DMP`) alongside the small one
 - stays on the blue screen instead of instantly rebooting, so I can take a phone photo of the stop code
-- turns on boot logging, so if a boot hangs with no blue screen, the last driver in `ntbtlog.txt` is the suspect
+- turns on boot logging, so if a boot hangs with no blue screen, `ntbtlog.txt` gives me something to compare against a good boot
 - runs a startup task a minute after every boot that copies any new dump into a folder cleanup tools don't touch
 
-![How crash evidence survives now: a blue screen stays on screen for a photo, the crash data waits in the page file, the next successful boot writes MEMORY.DMP and a minidump, and a startup task copies them to C:\CrashVault. A hang with no blue screen leaves ntbtlog.txt instead](/build-log/images/windows-update-amd-chipset-driver-broke-boot/crash-evidence-flow.svg)
+![How crash evidence survives now: a blue screen stays on screen for a photo, the crash data waits in the page file, the next successful boot writes MEMORY.DMP and a minidump, and a startup task copies them to C:\CrashVault. A hang with no blue screen leaves a section in ntbtlog.txt to compare against a Safe Mode boot](/build-log/images/windows-update-amd-chipset-driver-broke-boot/crash-evidence-flow.svg)
 
 ## Do it yourself
 
@@ -86,6 +86,8 @@ New-ItemProperty $cc -Name AlwaysKeepMemoryDump -Value 1 -PropertyType DWord -Fo
 New-ItemProperty $cc -Name AutoReboot -Value 0 -PropertyType DWord -Force | Out-Null            # stay on the blue screen so you can read the stop code
 bcdedit /set '{current}' bootlog yes          # writes C:\Windows\ntbtlog.txt at boot
 ```
+
+Reading `ntbtlog.txt` takes a little care. Every boot adds its own section to the end (a version line, then a timestamp), so cut out just the failed boot's section first. Its last few lines are leads, not a verdict. The log records what Windows decided to load ("Loaded driver" / "Did not load driver"), not which driver hung. A better test: drop the "Did not load driver" lines from the failed boot's section and from a Safe Mode boot's section, then compare the two. Drivers that only load in the normal boot are your suspects. If the failed boot has no section at all, or an empty one, the hang came before Windows could write the log to disk, and the log can't help with that one.
 
 **6. Copy dumps aside at every startup.** Create the folder first (`New-Item C:\ProgramData\WinSetup -ItemType Directory -Force`), then save this as `C:\ProgramData\WinSetup\save-dumps.ps1`:
 
