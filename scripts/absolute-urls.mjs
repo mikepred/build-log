@@ -64,8 +64,12 @@ export function absolutizeSiteUrls(markdown, { origin, base }) {
       const at = source.lastIndexOf('](');
       return at < 0 ? source : source.slice(0, at) + rewriteDestinations(source.slice(at));
     }
-    const urlNode = node.type === 'link' || node.type === 'image' || node.type === 'definition';
-    const children = node.children ?? [];
+    // Leaf nodes: a definition is all syntax, so its destination is rewritten.
+    // Any other leaf (text, break, ...) is content and stays verbatim, so
+    // escaped text like `\](/build-log/x)` inside a link label is never touched.
+    if (!node.children) return node.type === 'definition' ? rewriteDestinations(slice(node)) : slice(node);
+    const urlNode = node.type === 'link';
+    const children = node.children;
     const gap = urlNode || inUrlNode ? rewriteDestinations : (text) => text;
     let out = '';
     let cursor = node.position.start.offset;

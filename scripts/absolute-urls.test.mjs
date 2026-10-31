@@ -155,3 +155,10 @@ test('leaves inline code in image alt text alone and rewrites only the destinati
   const expected = `![\`](/build-log/x)\`](${abs}/images/o.png) ![\`](/build-log/x)\`](/other.png)`;
   assert.equal(absolutizeSiteUrls(input, root), expected);
 });
+
+test('leaves escaped link syntax in link text alone', () => {
+  assert.equal(
+    absolutizeSiteUrls('[see \\](/build-log/x) here](/build-log/y)', root),
+    `[see \\](/build-log/x) here](${abs}/y)`,
+  );
+});
