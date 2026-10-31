@@ -10,5 +10,6 @@ const entries = (await getCollection('entries')).sort(byDateDesc);
 
 <Base title={siteTitle} description={siteDescription} home>
   <p class="lede">{siteDescription}</p>
+  <p class="log-link"><a href={`${import.meta.env.BASE_URL}log/`}>Running log</a>: short notes on what's happening behind the entries.</p>
   <EntryList entries={entries} />
 </Base>

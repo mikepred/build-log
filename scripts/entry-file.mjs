@@ -1,7 +1,7 @@
 const ENTRY_FILENAME = /^(\d{4}-\d{2}-\d{2})-(.+)\.md$/;
 
 /** Slugs that would collide with site routes. */
-export const RESERVED_SLUGS = new Set(['index', 'tags', '404', 'rss.xml']);
+export const RESERVED_SLUGS = new Set(['index', 'tags', '404', 'rss.xml', 'log']);
 
 /**
  * Slug for an entry file. `content/2026-10-24-foo-bar.md` and

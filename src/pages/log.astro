@@ -1,0 +1,40 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import { formatDate, isoDate } from '../lib/entries';
+
+const description = 'Running log: short dated notes on what happened with the build log, newest first.';
+
+const notes = (await getCollection('log')).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime() || b.id.localeCompare(a.id),
+);
+const rendered = await Promise.all(
+  notes.map(async (note) => ({ note, Content: (await render(note)).Content })),
+);
+---
+
+<Base title="Log" description={description}>
+  <div class="log-page">
+    <h1>Log</h1>
+    <p class="lede">Short dated notes on what's going on behind the entries. Newest first.</p>
+    {
+      rendered.length === 0 ? (
+        <p class="empty">Nothing logged yet.</p>
+      ) : (
+        <div class="entries">
+          {rendered.map(({ note, Content }) => (
+            <article class="entry-summary log-note" id={note.id}>
+              <p class="meta">
+                <time datetime={isoDate(note.data.date)}>{formatDate(note.data.date)}</time>
+              </p>
+              {note.data.title && <h2>{note.data.title}</h2>}
+              <div class="body">
+                <Content />
+              </div>
+            </article>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</Base>

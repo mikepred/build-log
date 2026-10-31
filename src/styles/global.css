@@ -108,7 +108,8 @@ h1.site-name {
 
 .entry-summary h2,
 .entry h1,
-.tag-page h1 {
+.tag-page h1,
+.log-page h1 {
   margin: 0.15rem 0 0.4rem;
   font-size: 1.55rem;
   line-height: 1.25;
@@ -293,4 +294,13 @@ pre.astro-code code {
 
 .site-footer a {
   color: inherit;
+}
+
+.log-link {
+  margin: -1rem 0 2rem;
+  color: var(--summary);
+}
+
+.log-note .body {
+  margin-top: 0.5rem;
 }
