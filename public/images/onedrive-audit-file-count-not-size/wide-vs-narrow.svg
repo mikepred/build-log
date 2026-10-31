@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 360" width="880" height="360" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+<title id="t">Going wide versus going narrow</title><desc id="d">Two paths. Going wide: I picked the biggest options (full archaeology, content previews, one script for everything); the plan grew into a 500 to 1000+ line spec with a classifier, clustering, checkpoints and ZIP packaging; the scripts came back as v2-alpha with 13 features missing and a v3-beta with its own list; the run that finished wrote 218 MB of reports and still no folder plan. Going narrow: one job, fix v3 and get one full run; v3.1 stalled with pwsh at 2.6 GB, most likely in Group-Object; v3.2 used a Dictionary and progress bars; one full 11-minute run showed one repo was 92 percent of the files.</desc>
+<rect width="880" height="360" rx="12" fill="#fbfaf7"/>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker></defs>
+<text x="40" y="44" font-size="20" font-weight="600" fill="#1f2328">Same question, two ways to answer it</text>
+<g font-size="13" text-anchor="middle">
+<text x="40" y="84" text-anchor="start" font-size="14" font-weight="600" fill="#cf222e">Going wide</text>
+<rect x="40" y="96" width="185" height="84" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="132" y="124" font-weight="600" fill="#1f2328">Biggest options</text>
+<text x="132" y="146" fill="#57606a">full archaeology, previews,</text>
+<text x="132" y="164" fill="#57606a">one script for everything</text>
+<rect x="250" y="96" width="185" height="84" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="342" y="124" font-weight="600" fill="#1f2328">500-1000+ line spec</text>
+<text x="342" y="146" fill="#57606a">classifier, clustering,</text>
+<text x="342" y="164" fill="#57606a">checkpoints, ZIPs</text>
+<rect x="460" y="96" width="185" height="84" rx="8" fill="#fff8c5" stroke="#9a6700" stroke-width="1.5"/>
+<text x="552" y="124" font-weight="600" fill="#1f2328">Alpha, then beta</text>
+<text x="552" y="146" fill="#57606a">v2-alpha: 13 missing,</text>
+<text x="552" y="164" fill="#57606a">v3-beta: its own list</text>
+<rect x="670" y="96" width="170" height="84" rx="8" fill="#ffebe9" stroke="#cf222e" stroke-width="1.5"/>
+<text x="755" y="124" font-weight="600" fill="#1f2328">218 MB of reports</text>
+<text x="755" y="146" fill="#57606a">and still no</text>
+<text x="755" y="164" fill="#57606a">folder plan</text>
+<text x="40" y="238" text-anchor="start" font-size="14" font-weight="600" fill="#1a7f37">Going narrow</text>
+<rect x="40" y="250" width="185" height="84" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="132" y="278" font-weight="600" fill="#1f2328">One job</text>
+<text x="132" y="300" fill="#57606a">fix v3, get one</text>
+<text x="132" y="318" fill="#57606a">full run</text>
+<rect x="250" y="250" width="185" height="84" rx="8" fill="#fff8c5" stroke="#9a6700" stroke-width="1.5"/>
+<text x="342" y="278" font-weight="600" fill="#1f2328">v3.1 stalls</text>
+<text x="342" y="300" fill="#57606a">pwsh at 2.6 GB, most</text>
+<text x="342" y="318" fill="#57606a">likely in Group-Object</text>
+<rect x="460" y="250" width="185" height="84" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="552" y="278" font-weight="600" fill="#1f2328">v3.2</text>
+<text x="552" y="300" fill="#57606a">Dictionary grouping,</text>
+<text x="552" y="318" fill="#57606a">progress bars</text>
+<rect x="670" y="250" width="170" height="84" rx="8" fill="#dafbe1" stroke="#1a7f37" stroke-width="1.5"/>
+<text x="755" y="278" font-weight="600" fill="#1f2328">11-minute full run</text>
+<text x="755" y="300" fill="#57606a">one repo = 92%</text>
+<text x="755" y="318" fill="#57606a">of the files</text>
+</g>
+<g stroke="#57606a" stroke-width="1.5" marker-end="url(#a)">
+<line x1="227" y1="138" x2="246" y2="138"/>
+<line x1="437" y1="138" x2="456" y2="138"/>
+<line x1="647" y1="138" x2="666" y2="138"/>
+<line x1="227" y1="292" x2="246" y2="292"/>
+<line x1="437" y1="292" x2="456" y2="292"/>
+<line x1="647" y1="292" x2="666" y2="292"/>
+</g>
+</svg>
