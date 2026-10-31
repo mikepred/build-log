@@ -15,6 +15,73 @@ test('derives origin and base from canonical_url', () => {
     base: '',
   });
   assert.equal(siteRootFromCanonical('https://example.com/other/', 'my-post'), null);
+  // The trailing slash is required, matching the entry.mjs error.
+  assert.equal(
+    siteRootFromCanonical('https://mikepred.github.io/build-log/how-it-started', 'how-it-started'),
+    null,
+  );
+});
+
+test('rewrites the bare base but not lookalike paths', () => {
+  const input = [
+    '[home](/build-log) [home2](/build-log "Home") [q](/build-log?x=1) [h](/build-log#top)',
+    '![i](/build-log)',
+    '',
+    '[ref]: /build-log',
+    '',
+    '<a href="/build-log">home</a> <img src=\'/build-log\'>',
+    '[nope](/build-logs) [nope2](/build-logs/x) [nope3](/build-log-old/)',
+  ].join('\n');
+  const expected = [
+    `[home](${abs}) [home2](${abs} "Home") [q](${abs}?x=1) [h](${abs}#top)`,
+    `![i](${abs})`,
+    '',
+    `[ref]: ${abs}`,
+    '',
+    `<a href="${abs}">home</a> <img src='${abs}'>`,
+    '[nope](/build-logs) [nope2](/build-logs/x) [nope3](/build-log-old/)',
+  ].join('\n');
+  assert.equal(absolutizeSiteUrls(input, root), expected);
+});
+
+test('leaves code alone in lists, blockquotes and indented blocks', () => {
+  const input = [
+    '1. Step one:',
+    '',
+    '    ```md',
+    '    ![x](/build-log/images/x.svg)',
+    '    ```',
+    '',
+    '   - nested:',
+    '',
+    '         ~~~',
+    '         <img src="/build-log/images/n.svg">',
+    '         ~~~',
+    '',
+    '> quoted:',
+    '>',
+    '> ```',
+    '> [l](/build-log/log/)',
+    '> ```',
+    '',
+    'Indented code block:',
+    '',
+    '    [l](/build-log/log/)',
+    '    <img src="/build-log/images/i.svg">',
+    '',
+    '> but a quoted [link](/build-log/log/) and `[code](/build-log/log/)`',
+    '- a listed ![img](/build-log/images/y.svg)',
+  ].join('\n');
+  const expected = input
+    .replace('> but a quoted [link](/build-log/log/)', `> but a quoted [link](${abs}/log/)`)
+    .replace('- a listed ![img](/build-log/images/y.svg)', `- a listed ![img](${abs}/images/y.svg)`);
+  assert.equal(absolutizeSiteUrls(input, root), expected);
+});
+
+test('handles an image inside a link and inline code in a link label', () => {
+  const input = '[![badge](/build-log/images/b.svg)](/build-log/) [`/build-log/x` docs](/build-log/x/)';
+  const expected = `[![badge](${abs}/images/b.svg)](${abs}/) [\`/build-log/x\` docs](${abs}/x/)`;
+  assert.equal(absolutizeSiteUrls(input, root), expected);
 });
 
 test('rewrites markdown images, links, reference definitions and raw html', () => {
@@ -22,14 +89,18 @@ test('rewrites markdown images, links, reference definitions and raw html', () =
     '![chart](/build-log/images/a/chart.svg)',
     '![alt](</build-log/images/a/b.svg> "title")',
     'see [the log](/build-log/log/) and [a post](/build-log/other-post/#fix)',
+    '',
     '[ref]: /build-log/images/a/ref.png',
+    '',
     '<img src="/build-log/images/a/c.png" alt="c"> <a href=\'/build-log/\'>home</a>',
   ].join('\n');
   const expected = [
     `![chart](${abs}/images/a/chart.svg)`,
     `![alt](<${abs}/images/a/b.svg> "title")`,
     `see [the log](${abs}/log/) and [a post](${abs}/other-post/#fix)`,
+    '',
     `[ref]: ${abs}/images/a/ref.png`,
+    '',
     `<img src="${abs}/images/a/c.png" alt="c"> <a href='${abs}/'>home</a>`,
   ].join('\n');
   assert.equal(absolutizeSiteUrls(input, root), expected);
