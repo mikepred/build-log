@@ -1,4 +1,5 @@
 import { fromMarkdown } from 'mdast-util-from-markdown';
+import { parseFragment } from 'parse5';
 
 /**
  * Cross-posted markdown lands on another domain, so root-relative URLs under
@@ -33,12 +34,6 @@ export function siteRootFromCanonical(canonicalUrl, slug) {
  */
 export function absolutizeSiteUrls(markdown, { origin, base }) {
   const underBase = base === '' ? /^\/(?!\/)/ : new RegExp(`^${escapeRegExp(base)}(?:[/?#]|$)`);
-  const path =
-    base === ''
-      ? `/(?!/)[^\\s)"'<>]*`
-      : `${escapeRegExp(base)}(?:[/?#][^\\s)"'<>]*)?(?=[\\s)"'<>]|$)`;
-  const htmlUrl = new RegExp(`(\\b(?:src|href)\\s*=\\s*["']?)(${path})`, 'gi');
-
   // [start, end, replacement] edits on the original source.
   const edits = [];
   const destination = (start, end) => {
@@ -60,23 +55,55 @@ export function absolutizeSiteUrls(markdown, { origin, base }) {
     }],
   });
 
-  // Raw HTML (block or inline, including inside link labels) gets the
-  // src/href rewrite. Code nodes are never html nodes, so they stay verbatim.
+  // Parse raw HTML with source locations so only actual attribute values are
+  // edited; comments, script/style contents and other attributes stay intact.
+  let rawText = null;
+  const protectedRanges = [];
   const visit = (node) => {
     if (node.type === 'html' && node.position) {
       const { start, end } = node.position;
       const source = markdown.slice(start.offset, end.offset);
-      const rewritten = source.replace(htmlUrl, (_, lead, url) => `${lead}${origin}${url}`);
-      if (rewritten !== source) edits.push([start.offset, end.offset, rewritten]);
+      if (rawText) {
+        if (new RegExp(`^</${rawText.tag}\\s*>`, 'i').test(source)) {
+          protectedRanges.push([rawText.start, end.offset]);
+          rawText = null;
+        }
+        return;
+      }
+      const fragment = parseFragment(source, { sourceCodeLocationInfo: true });
+      const visitHtml = (element) => {
+        for (const [name, location] of Object.entries(element.sourceCodeLocation?.attrs ?? {})) {
+          if (name !== 'src' && name !== 'href') continue;
+          const attribute = source.slice(location.startOffset, location.endOffset);
+          const match = /^[^\s=]+\s*=\s*(["']?)/.exec(attribute);
+          if (!match) continue;
+          const valueStart = location.startOffset + match[0].length;
+          const valueEnd = location.endOffset - (match[1] ? 1 : 0);
+          if (underBase.test(source.slice(valueStart, valueEnd))) {
+            edits.push([start.offset + valueStart, start.offset + valueStart, origin]);
+          }
+        }
+        for (const child of element.childNodes ?? []) visitHtml(child);
+        if (element.content) visitHtml(element.content);
+      };
+      visitHtml(fragment);
+      // Inline HTML tags can be separate Markdown nodes. Protect the text
+      // between an opening raw-text tag and its closing tag as well.
+      const opening = /^<(script|style)(?=[\s/>])/i.exec(source);
+      if (opening && !new RegExp(`</${opening[1]}\\s*>`, 'i').test(source)) {
+        rawText = { tag: opening[1], start: end.offset };
+      }
     }
     for (const child of node.children ?? []) visit(child);
   };
   visit(root);
+  if (rawText) protectedRanges.push([rawText.start, markdown.length]);
 
   edits.sort((a, b) => a[0] - b[0]);
   let out = '';
   let cursor = 0;
   for (const [start, end, text] of edits) {
+    if (protectedRanges.some(([from, to]) => start >= from && start < to)) continue;
     out += markdown.slice(cursor, start) + text;
     cursor = end;
   }

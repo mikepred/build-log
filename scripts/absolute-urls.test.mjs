@@ -146,6 +146,31 @@ test('rewrites raw html nested inside links as well as the link itself', () => {
   assert.equal(absolutizeSiteUrls(input, root), expected);
 });
 
+test('rewrites only real HTML attributes, preserving scripts, styles and comments', () => {
+  const input = [
+    '<div data-note=\'href="/build-log/no"\'>',
+    '<img SRC="/build-log/image.svg" data-src="/build-log/no" alt=\'src="/build-log/no"\'>',
+    '<a href=/build-log/page>page</a>',
+    '<script src="/build-log/app.js">const example = \'href="/build-log/no"\';</script>',
+    '<style>/* href="/build-log/no" */</style>',
+    '<!-- <img src="/build-log/no"> -->',
+    '</div>',
+  ].join('\n');
+  const expected = input
+    .replace('SRC="/build-log/image.svg"', `SRC="${abs}/image.svg"`)
+    .replace('href=/build-log/page', `href=${abs}/page`)
+    .replace('src="/build-log/app.js"', `src="${abs}/app.js"`);
+  assert.equal(absolutizeSiteUrls(input, root), expected);
+  assert.equal(
+    absolutizeSiteUrls('<script>const example = \'href="/build-log/no"\';</script>', root),
+    '<script>const example = \'href="/build-log/no"\';</script>',
+  );
+  const inline = 'before <script src="/build-log/app.js">"<img src=\"/build-log/no\"> [x](/build-log/no)"</script> <a href="/build-log/yes">after</a>';
+  assert.equal(absolutizeSiteUrls(inline, root), inline
+    .replace('src="/build-log/app.js"', `src="${abs}/app.js"`)
+    .replace('href="/build-log/yes"', `href="${abs}/yes"`));
+});
+
 test('returns empty and whitespace-only input unchanged', () => {
   for (const input of ['', '\n', '  \n\n']) assert.equal(absolutizeSiteUrls(input, root), input);
 });
