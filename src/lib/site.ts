@@ -7,3 +7,13 @@ export const mitLicenseUrl = 'https://github.com/mikepred/build-log/blob/main/LI
 
 export const contentLicenseUrl =
   'https://github.com/mikepred/build-log/blob/main/LICENSE-content';
+
+export const authorName = 'Mike';
+export const authorUsername = 'mikepred';
+export const authorUrl = 'https://github.com/mikepred';
+
+/** Default social card in public/, used for og:image and twitter:image on every page. */
+export const ogImagePath = 'og-default.png';
+export const ogImageWidth = 1200;
+export const ogImageHeight = 630;
+export const ogImageAlt = 'build log by mikepred';

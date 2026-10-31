@@ -20,7 +20,12 @@ const { entry } = Astro.props;
 const { Content } = await render(entry);
 ---
 
-<Base title={entry.data.title} description={entry.data.summary} canonical={entry.data.canonical_url}>
+<Base
+  title={entry.data.title}
+  description={entry.data.summary}
+  canonical={entry.data.canonical_url}
+  article={{ date: entry.data.date, tags: entry.data.tags }}
+>
   <article class="entry">
     <header>
       <h1>{entry.data.title}</h1>
