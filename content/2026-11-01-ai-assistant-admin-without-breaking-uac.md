@@ -121,6 +121,10 @@ function Assert-Locked($path) {
   }
 }
 
+# Unregister the old tasks before touching the folder, so a run that stops below never leaves tasks pointing at a folder
+# that might not be locked (say, one you deleted and someone else recreated).
+Get-ScheduledTask -TaskPath '\WinSetup\' -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false
+
 # A new folder is created already locked, in one step: owner Administrators and one complete permission list
 # (Administrators + SYSTEM full control, Users read and run, nothing inherited), so nothing can be planted in it first.
 # An existing folder is never re-permissioned (that would push the new list into whatever is inside). It's only reused
@@ -154,7 +158,7 @@ Get-ScheduledTask -TaskPath '\WinSetup\' | Select-Object TaskName, State
 A few notes on what those lines do:
 
 - The folder's permissions are written as one complete list (the SDDL string `O:BAD:PAI(...)`), at the moment the folder is created, and each script is deleted and copied in fresh so it inherits that list. `icacls /grant:r` alone only swaps the entries it names, so an old write grant for your account would survive a rerun, and so would your ability to swap the scripts the tasks run.
-- Nothing privileged walks the folder or changes permissions on anything already inside it. Applying a permission list to an existing folder pushes it down into everything inside, and a junction planted in there could point that change at some other folder. So the installer only creates the folder locked, reuses one only if it's already locked, and touches nothing but the files it names. The check walks everything without following links. It refuses to register any tasks if it finds a link, an owner other than Administrators or SYSTEM, or anyone else who can change something. On a folder an older version left behind, that can mean deleting it and rerunning.
+- Nothing privileged walks the folder or changes permissions on anything already inside it. Applying a permission list to an existing folder pushes it down into everything inside, and a junction planted in there could point that change at some other folder. So the installer only creates the folder locked, reuses one only if it's already locked, and touches nothing but the files it names. The check walks everything without following links. It refuses to register any tasks if it finds a link, an owner other than Administrators or SYSTEM, or anyone else who can change something. On a folder an older version left behind, that can mean deleting it and rerunning. The old tasks are unregistered before any of this, so a run that stops partway leaves no task pointing at the folder until a rerun gets all the way through.
 - `-RunLevel Highest` with `-LogonType Interactive` means the task gets your full admin token, but only while you're signed in.
 - The SDDL string at the end is the task's own permission list: `FA` (full access) for Administrators (`BA`) and SYSTEM (`SY`), and only `FRFX` (read and run) for your account.
 - `-ExecutionPolicy Bypass` is PowerShell's script-signing setting, not UAC. It's there so the task can run unsigned local scripts. The real protection is that only admins can change those scripts.
