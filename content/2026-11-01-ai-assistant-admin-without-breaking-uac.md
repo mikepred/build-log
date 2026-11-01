@@ -60,6 +60,9 @@ This assumes your everyday account is an administrator under UAC, which is the W
 
 ```powershell
 param([Parameter(Mandatory)][ValidateSet('RestorePoint','Tweaks','Apps','SaveDumps','Check')][string]$Action)
+# The task starts a fresh -NoProfile process, so nothing upstream sets this. Without it, a failed registry write
+# is a non-terminating error, the catch below never sees it, and the log still says exit 0.
+$ErrorActionPreference = 'Stop'
 # Load modules only from system folders. The per-user module folder is writable by anything running as you.
 $env:PSModulePath = "$env:ProgramFiles\WindowsPowerShell\Modules;$env:SystemRoot\System32\WindowsPowerShell\v1.0\Modules"
 $root = $PSScriptRoot
@@ -84,6 +87,8 @@ Stop-Transcript | Out-Null
 exit $code
 ```
 
+`$ErrorActionPreference = 'Stop'` turns every error into one the `catch` sees, so a failed step can't end in a log that says `exit 0`. The scripts the runner calls inherit it too. If one of them is meant to shrug off an error, say so on that line with `-ErrorAction Continue`.
+
 Every script the runner calls sits next to it in the protected folder. If an action called a script somewhere your normal account can write, that action would be "run whatever is in that file," as admin.
 
 **3. Write the installer** (`install-admin-tasks.ps1`). It locks the folder, copies the scripts in and registers one task per action. Rerun it whenever you change a script or the menu.
@@ -96,11 +101,30 @@ $src = $PSScriptRoot; $dst = 'C:\ProgramData\WinSetupAdmin'
 $user = $id.Name; $sid = $id.User.Value
 $actions = 'RestorePoint','Tweaks','Apps','SaveDumps','Check'
 
-# Administrators + SYSTEM full control, Users read and run. Inheritance off, so nothing from ProgramData leaks in.
+# Replace the folder's whole permission list, don't edit it: Administrators + SYSTEM full control, Users read and run,
+# inheritance off. Editing would keep any old grant already on the folder, including one for your own account.
 New-Item $dst -ItemType Directory -Force | Out-Null
-icacls $dst /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)RX' | Out-Null
+if ((Get-Item $dst -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "$dst is a link. Delete it and rerun." }
+icacls $dst /setowner '*S-1-5-32-544' /T /C | Out-Null
+$acl = New-Object Security.AccessControl.DirectorySecurity
+$acl.SetSecurityDescriptorSddlForm('D:PAI(A;OICI;FA;;;BA)(A;OICI;FA;;;SY)(A;OICI;0x1200a9;;;BU)')
+Set-Acl -Path $dst -AclObject $acl
+if (Get-ChildItem $dst -Force) { icacls "$dst\*" /reset /T /C | Out-Null }   # anything already inside drops its own grants and inherits the list above
 foreach ($f in 'runner.ps1','01-tweaks.ps1','02-apps.ps1','apps.json','save-dumps.ps1') { Copy-Item (Join-Path $src $f) (Join-Path $dst $f) -Force }
 icacls $dst /setowner '*S-1-5-32-544' /T /C | Out-Null
+
+# Check the result instead of trusting it: stop if anyone but Administrators or SYSTEM owns, or can change, anything in there.
+$trusted = 'S-1-5-32-544','S-1-5-18'
+$change  = [int][Security.AccessControl.FileSystemRights]'Write, Delete, DeleteSubdirectoriesAndFiles, ChangePermissions, TakeOwnership' -bor 0x50000000   # + generic all/write
+foreach ($item in @(Get-Item $dst -Force) + @(Get-ChildItem $dst -Recurse -Force)) {
+  $itemAcl = Get-Acl -LiteralPath $item.FullName
+  if ($trusted -notcontains $itemAcl.GetOwner([Security.Principal.SecurityIdentifier]).Value) { throw "Not owned by Administrators: $($item.FullName)" }
+  foreach ($r in $itemAcl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])) {
+    if ($r.AccessControlType -eq 'Allow' -and $trusted -notcontains $r.IdentityReference.Value -and ([int]$r.FileSystemRights -band $change)) {
+      throw "$($r.IdentityReference.Value) can change $($item.FullName). Fix the permissions before registering tasks."
+    }
+  }
+}
 
 $ps  = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"   # full path, not a PATH lookup
 $svc = New-Object -ComObject 'Schedule.Service'; $svc.Connect()
@@ -117,6 +141,7 @@ Get-ScheduledTask -TaskPath '\WinSetup\' | Select-Object TaskName, State
 
 A few notes on what those lines do:
 
+- The folder's permissions are written as one complete list (the SDDL string `D:PAI(...)`), and anything already in the folder is reset to inherit it. `icacls /grant:r` alone only swaps the entries it names, so an old write grant for your account would survive a rerun, and so would your ability to swap the scripts the tasks run. The check after the copy refuses to register any tasks if that happened anyway.
 - `-RunLevel Highest` with `-LogonType Interactive` means the task gets your full admin token, but only while you're signed in.
 - The SDDL string at the end is the task's own permission list: `FA` (full access) for Administrators (`BA`) and SYSTEM (`SY`), and only `FRFX` (read and run) for your account.
 - `-ExecutionPolicy Bypass` is PowerShell's script-signing setting, not UAC. It's there so the task can run unsigned local scripts. The real protection is that only admins can change those scripts.
