@@ -25,7 +25,7 @@ It worked, but I wanted to know why, so I had dr eggbot, the Grok Bot I was work
 
 The repair log was the jackpot. It listed exactly one cause: "a recent driver update installation could be preventing Windows from starting." Update history filled in the rest. At 3:07 AM, Windows Update had installed "AMD - System 20.50.0.0," a driver for the CPU's PCIe root ports, right on top of the Gigabyte package I'd just put on. Startup Repair's fix was to uninstall it, which is why Continue worked. Checking afterward, those root ports were back on Microsoft's standard driver, Device Manager had no problem devices, and my Gigabyte AMD drivers were still in place.
 
-![Timeline of the night: fresh Windows 11 install, Gigabyte chipset and NVIDIA drivers, Windows Update installs AMD - System 20.50.0.0 at 3:07 AM, boot loop into Automatic Repair, Startup Repair uninstalls that driver, then a policy blocks Windows Update drivers](/build-log/images/windows-update-amd-chipset-driver-broke-boot/boot-loop-timeline.svg)
+![Timeline of the night: fresh Windows 11 install, Gigabyte chipset and NVIDIA drivers, Windows Update installs AMD - System 20.50.0.0 at 3:07 AM, boot loop into Automatic Repair, Startup Repair uninstalls that driver, then a policy blocks Windows Update drivers](/build-log/images/windows-update-amd-chipset-driver-broke-boot/boot-loop-timeline.png)
 
 One correction to my own story: a Windows driver can't stop the board from POSTing. Most likely the hang came right after POST while the screen was still dark, and my hard shutdowns are what kicked off Automatic Repair after a couple of tries.
 
@@ -40,7 +40,7 @@ Losing that dump bugged me, though, so I asked the follow-up question: if this h
 - turns on boot logging, so if a boot hangs with no blue screen, `ntbtlog.txt` gives me something to compare against a good boot
 - runs a startup task a minute after every boot that copies any new dump into a folder cleanup tools don't touch
 
-![How crash evidence survives now: a blue screen stays on screen for a photo, the crash data waits in the page file, the next successful boot writes MEMORY.DMP and a minidump, and a startup task copies them to C:\CrashVault. A hang with no blue screen leaves a section in ntbtlog.txt to compare against a Safe Mode boot](/build-log/images/windows-update-amd-chipset-driver-broke-boot/crash-evidence-flow.svg)
+![How crash evidence survives now: a blue screen stays on screen for a photo, the crash data waits in the page file, the next successful boot writes MEMORY.DMP and a minidump, and a startup task copies them to C:\CrashVault. A hang with no blue screen leaves a section in ntbtlog.txt to compare against a Safe Mode boot](/build-log/images/windows-update-amd-chipset-driver-broke-boot/crash-evidence-flow.png)
 
 ## Do it yourself
 
