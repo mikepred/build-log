@@ -149,8 +149,19 @@ $settings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGo
 foreach ($a in $actions) {
   $act = New-ScheduledTaskAction -Execute $ps -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$dst\runner.ps1`" -Action $a"
   Register-ScheduledTask -TaskPath '\WinSetup\' -TaskName $a -Action $act -Principal $principal -Settings $settings -Force | Out-Null
-  # Admins + SYSTEM full control; your account may read and start the task, not edit it.
-  $svc.GetFolder('\WinSetup').GetTask($a).SetSecurityDescriptor("D:(A;;FA;;;BA)(A;;FA;;;SY)(A;;FRFX;;;$sid)", 0)
+  # Admins + SYSTEM full control; your account may read and start the task, not edit it. Without this flag,
+  # Task Scheduler quietly adds its own Allow entry for the account the task runs as, which is you.
+  $TASK_DONT_ADD_PRINCIPAL_ACE = 0x10
+  $svc.GetFolder('\WinSetup').GetTask($a).SetSecurityDescriptor("D:(A;;FA;;;BA)(A;;FA;;;SY)(A;;FRFX;;;$sid)", $TASK_DONT_ADD_PRINCIPAL_ACE)
+  # Read the stored list back: anyone but Administrators or SYSTEM with more than read and run fails the install.
+  $readRun = 0x1200A9 -bor 0xA0000000   # FRFX, plus generic read/execute
+  $stored  = New-Object Security.AccessControl.RawSecurityDescriptor ($svc.GetFolder('\WinSetup').GetTask($a).GetSecurityDescriptor(4))
+  foreach ($ace in $stored.DiscretionaryAcl) {
+    if ($ace.AceQualifier -eq 'AccessAllowed' -and 'S-1-5-32-544','S-1-5-18' -notcontains $ace.SecurityIdentifier.Value -and ($ace.AccessMask -band -bnot $readRun)) {
+      Unregister-ScheduledTask -TaskPath '\WinSetup\' -TaskName $a -Confirm:$false
+      throw "Task $a gives $($ace.SecurityIdentifier.Value) more than read and run. Unregistered it."
+    }
+  }
 }
 Get-ScheduledTask -TaskPath '\WinSetup\' | Select-Object TaskName, State
 ```
@@ -160,7 +171,7 @@ A few notes on what those lines do:
 - The folder's permissions are written as one complete list (the SDDL string `O:BAD:PAI(...)`), at the moment the folder is created, and each script is deleted and copied in fresh so it inherits that list. `icacls /grant:r` alone only swaps the entries it names, so an old write grant for your account would survive a rerun, and so would your ability to swap the scripts the tasks run.
 - Nothing privileged walks the folder or changes permissions on anything already inside it. Applying a permission list to an existing folder pushes it down into everything inside, and a junction planted in there could point that change at some other folder. So the installer only creates the folder locked, reuses one only if it's already locked, and touches nothing but the files it names. The check walks everything without following links. It refuses to register any tasks if it finds a link, an owner other than Administrators or SYSTEM, or anyone else who can change something. On a folder an older version left behind, that can mean deleting it and rerunning. The old tasks are unregistered before any of this, so a run that stops partway leaves no task pointing at the folder until a rerun gets all the way through.
 - `-RunLevel Highest` with `-LogonType Interactive` means the task gets your full admin token, but only while you're signed in.
-- The SDDL string at the end is the task's own permission list: `FA` (full access) for Administrators (`BA`) and SYSTEM (`SY`), and only `FRFX` (read and run) for your account.
+- The SDDL string at the end is the task's own permission list: `FA` (full access) for Administrators (`BA`) and SYSTEM (`SY`), and only `FRFX` (read and run) for your account. Flag `0x10` (`TASK_DONT_ADD_PRINCIPAL_ACE`) matters here. Without it, Task Scheduler adds its own Allow entry for the account the task runs as, and here that's you, so the stored list isn't the one you wrote. The installer then reads each task's list back and unregisters the task and stops if anyone but Administrators or SYSTEM has more than read and run.
 - `-ExecutionPolicy Bypass` is PowerShell's script-signing setting, not UAC. It's there so the task can run unsigned local scripts. The real protection is that only admins can change those scripts.
 
 **4. Install it from an admin window.** Open PowerShell with **Run as administrator** and run:
