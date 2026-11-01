@@ -1,6 +1,6 @@
 ---
 title: "One markdown file, three sites: what broke the first time my crosspost ran"
-date: 2026-11-02
+date: 2026-10-31
 tags: [github-actions, astro, devto, hashnode]
 summary: "My build log publishes one markdown file to GitHub Pages, dev.to and Hashnode on merge. The cross-posting sat untested for a week, and the first real post broke it four ways: relative URLs, an npm lockfile, a retired Hashnode endpoint, and a green run that hid a failure. Five small PRs fixed it."
 canonical_url: "https://mikepred.github.io/build-log/one-markdown-file-three-sites/"
@@ -57,7 +57,7 @@ My code is all in the public repo, [github.com/mikepred/build-log](https://githu
 ```yaml
 ---
 title: "One markdown file, three sites"
-date: 2026-11-02
+date: 2026-10-31
 tags: [github-actions, astro, devto, hashnode]   # 4 max, dev.to's limit
 summary: "Used as the meta description, dev.to description and Hashnode subtitle."
 canonical_url: "https://<you>.github.io/<repo>/<slug>/"
@@ -133,7 +133,7 @@ A missing secret is different. That sender is skipped with a warning, so a copy 
 **8. Dry-run before the first real merge.** My script has a mode that builds every request and prints it, with no network and no state written:
 
 ```bash
-node scripts/crosspost.mjs --dry-run content/2026-11-02-one-markdown-file-three-sites.md
+node scripts/crosspost.mjs --dry-run content/2026-10-31-one-markdown-file-three-sites.md
 ```
 
 That's how #17 got checked: the retro's diagram paths came out relative before the fix and absolute after it. A dry run can't catch the other three, though: npm on the runner, a retired endpoint and a hidden failure only show up on a real run. So plan to watch the first one.
