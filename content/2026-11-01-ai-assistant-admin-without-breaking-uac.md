@@ -101,29 +101,40 @@ $src = $PSScriptRoot; $dst = 'C:\ProgramData\WinSetupAdmin'
 $user = $id.Name; $sid = $id.User.Value
 $actions = 'RestorePoint','Tweaks','Apps','SaveDumps','Check'
 
-# Replace the folder's whole permission list, don't edit it: Administrators + SYSTEM full control, Users read and run,
-# inheritance off. Editing would keep any old grant already on the folder, including one for your own account.
+# Lock the folder itself first, touching nothing inside it: owner Administrators and one complete permission list
+# (Administrators + SYSTEM full control, Users read and run, nothing inherited). Editing the list would keep old grants.
 New-Item $dst -ItemType Directory -Force | Out-Null
-if ((Get-Item $dst -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "$dst is a link. Delete it and rerun." }
-icacls $dst /setowner '*S-1-5-32-544' /T /C | Out-Null
+if ((Get-Item -LiteralPath $dst -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "$dst is a link. Delete it and rerun." }
+icacls $dst /setowner '*S-1-5-32-544' | Out-Null   # this folder only, no /T: a recursive walk could follow a link planted inside
 $acl = New-Object Security.AccessControl.DirectorySecurity
 $acl.SetSecurityDescriptorSddlForm('D:PAI(A;OICI;FA;;;BA)(A;OICI;FA;;;SY)(A;OICI;0x1200a9;;;BU)')
-Set-Acl -Path $dst -AclObject $acl
-if (Get-ChildItem $dst -Force) { icacls "$dst\*" /reset /T /C | Out-Null }   # anything already inside drops its own grants and inherits the list above
-foreach ($f in 'runner.ps1','01-tweaks.ps1','02-apps.ps1','apps.json','save-dumps.ps1') { Copy-Item (Join-Path $src $f) (Join-Path $dst $f) -Force }
-icacls $dst /setowner '*S-1-5-32-544' /T /C | Out-Null
+Set-Acl -LiteralPath $dst -AclObject $acl
+if (Get-ChildItem -LiteralPath $dst -Force -Attributes ReparsePoint) { throw "$dst contains a link. Delete the folder and rerun." }
 
-# Check the result instead of trusting it: stop if anyone but Administrators or SYSTEM owns, or can change, anything in there.
+# Delete and re-copy each script rather than overwrite it, so the new file inherits the list above instead of keeping old grants.
+foreach ($f in 'runner.ps1','01-tweaks.ps1','02-apps.ps1','apps.json','save-dumps.ps1') {
+  $target = Join-Path $dst $f
+  if (Test-Path -LiteralPath $target) { Remove-Item -LiteralPath $target -Force }
+  Copy-Item -LiteralPath (Join-Path $src $f) -Destination $target
+  icacls $target /setowner '*S-1-5-32-544' | Out-Null
+}
+
+# Check the result instead of trusting it: stop at any link, and if anyone but Administrators or SYSTEM owns, or can change,
+# anything in there. The walk is hand-rolled because Get-ChildItem -Recurse in Windows PowerShell follows junctions.
 $trusted = 'S-1-5-32-544','S-1-5-18'
 $change  = [int][Security.AccessControl.FileSystemRights]'Write, Delete, DeleteSubdirectoriesAndFiles, ChangePermissions, TakeOwnership' -bor 0x50000000   # + generic all/write
-foreach ($item in @(Get-Item $dst -Force) + @(Get-ChildItem $dst -Recurse -Force)) {
+$queue = New-Object Collections.Queue; $queue.Enqueue((Get-Item -LiteralPath $dst -Force))
+while ($queue.Count) {
+  $item = $queue.Dequeue()
+  if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "Link found: $($item.FullName). Delete it and rerun." }
   $itemAcl = Get-Acl -LiteralPath $item.FullName
   if ($trusted -notcontains $itemAcl.GetOwner([Security.Principal.SecurityIdentifier]).Value) { throw "Not owned by Administrators: $($item.FullName)" }
   foreach ($r in $itemAcl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])) {
     if ($r.AccessControlType -eq 'Allow' -and $trusted -notcontains $r.IdentityReference.Value -and ([int]$r.FileSystemRights -band $change)) {
-      throw "$($r.IdentityReference.Value) can change $($item.FullName). Fix the permissions before registering tasks."
+      throw "$($r.IdentityReference.Value) can change $($item.FullName). Fix it, or delete the folder, and rerun."
     }
   }
+  if ($item.PSIsContainer) { Get-ChildItem -LiteralPath $item.FullName -Force | ForEach-Object { $queue.Enqueue($_) } }
 }
 
 $ps  = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"   # full path, not a PATH lookup
@@ -141,7 +152,8 @@ Get-ScheduledTask -TaskPath '\WinSetup\' | Select-Object TaskName, State
 
 A few notes on what those lines do:
 
-- The folder's permissions are written as one complete list (the SDDL string `D:PAI(...)`), and anything already in the folder is reset to inherit it. `icacls /grant:r` alone only swaps the entries it names, so an old write grant for your account would survive a rerun, and so would your ability to swap the scripts the tasks run. The check after the copy refuses to register any tasks if that happened anyway.
+- The folder's permissions are written as one complete list (the SDDL string `D:PAI(...)`), and each script is deleted and copied in fresh so it inherits that list. `icacls /grant:r` alone only swaps the entries it names, so an old write grant for your account would survive a rerun, and so would your ability to swap the scripts the tasks run.
+- Nothing privileged walks the folder recursively. A junction planted inside could point a recursive owner or permission change at some other folder, so the installer only touches the folder itself and the files it names, and refuses to continue if it finds a link. The final check walks everything without following links. It refuses to register any tasks if it finds a link, an owner other than Administrators or SYSTEM, or anyone else who can change something. On a folder an older version left behind, that can mean deleting it and rerunning.
 - `-RunLevel Highest` with `-LogonType Interactive` means the task gets your full admin token, but only while you're signed in.
 - The SDDL string at the end is the task's own permission list: `FA` (full access) for Administrators (`BA`) and SYSTEM (`SY`), and only `FRFX` (read and run) for your account.
 - `-ExecutionPolicy Bypass` is PowerShell's script-signing setting, not UAC. It's there so the task can run unsigned local scripts. The real protection is that only admins can change those scripts.
