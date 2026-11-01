@@ -16,7 +16,7 @@ canonical_url: "https://mikepred.github.io/build-log/one-markdown-file-three-sit
 - **Prevention:** tests for the URL rewriting that run before every cross-post, a lockfile made with the runner's npm, and a run that goes red when any site rejects a post. The next post, the AMD boot loop one, went to all three sites on its first try.
 - **Lesson:** a pipeline that has never run isn't done. It's a draft.
 
-![The pipeline: a post in content/ is merged to main, deploy.yml builds the Astro site for GitHub Pages, crosspost.yml runs npm ci and tests, crosspost.mjs rewrites URLs and sends to dev.to then Hashnode, a rejected send turns the run red, and ids land in sync-state.json with skip ci. Markers show the four breaks: relative URLs (#17), the lockfile (#18), Hashnode's endpoint (#19) and the green run (#21)](/build-log/images/one-markdown-file-three-sites/pipeline.svg)
+![The pipeline: a post in content/ is merged to main, deploy.yml builds the Astro site for GitHub Pages, crosspost.yml runs npm ci and tests, crosspost.mjs rewrites URLs and sends to dev.to then Hashnode, a rejected send turns the run red, and ids land in sync-state.json with skip ci. Markers show the four breaks: relative URLs (#17), the lockfile (#18), Hashnode's endpoint (#19) and the green run (#21)](/build-log/images/one-markdown-file-three-sites/pipeline.png)
 
 ## The story
 

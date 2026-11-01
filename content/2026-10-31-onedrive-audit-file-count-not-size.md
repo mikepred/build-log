@@ -44,7 +44,7 @@ v3.1 ran, and then it seemed to stop. The output folder had 12 files, then sat t
 
 v3.2 finished in about 11 minutes with zero skipped paths. On this run the duplicate step took about a minute.
 
-![Two ways the audit went: the wide path stacked up the biggest options, a 500-1000+ line spec, alpha and beta scripts with lists of missing features, and 218 MB of reports. The narrow path fixed the existing script, found the stall in Group-Object, swapped in a Dictionary with progress bars, and got one full 11-minute run whose summary showed the answer](/build-log/images/onedrive-audit-file-count-not-size/wide-vs-narrow.svg)
+![Two ways the audit went: the wide path stacked up the biggest options, a 500-1000+ line spec, alpha and beta scripts with lists of missing features, and 218 MB of reports. The narrow path fixed the existing script, found the stall in Group-Object, swapped in a Dictionary with progress bars, and got one full 11-minute run whose summary showed the answer](/build-log/images/onedrive-audit-file-count-not-size/wide-vs-narrow.png)
 
 The numbers:
 
@@ -55,7 +55,7 @@ The numbers:
 
 That last line didn't look like my stuff. It was one local code repo, git worktrees and their `node_modules` included, with 296,714 files. That's about 92% of every file in my OneDrive, and it took up only about 2.4 GB, less than 1% of the space.
 
-![Three bars from the audit. Items OneDrive tracks: 427,369 files and folders, past Microsoft's 300,000-item sync recommendation. Files: 322,219, and one code repo is 296,714 of them, about 92%. Space: 267.82 GB, and the same repo is about 2.4 GB, under 1%](/build-log/images/onedrive-audit-file-count-not-size/count-vs-size.svg)
+![Three bars from the audit. Items OneDrive tracks: 427,369 files and folders, past Microsoft's 300,000-item sync recommendation. Files: 322,219, and one code repo is 296,714 of them, about 92%. Space: 267.82 GB, and the same repo is about 2.4 GB, under 1%](/build-log/images/onedrive-audit-file-count-not-size/count-vs-size.png)
 
 I'd already decided all code could leave OneDrive, so the repo got deleted. Deleting the files locally took about two and a half minutes. An empty top folder stayed behind because another app still had it open. That was the easy part.
 

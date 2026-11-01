@@ -32,7 +32,7 @@ Here's what dr eggbot built:
 - A permission on each task that lets my normal account start it and read it, but not change it.
 - A log for every run, written inside the protected folder, that dr eggbot can read afterward.
 
-![Two ways to give an assistant admin. Rejected: anything running as me could use an SSH key in my profile to reach localhost and get any command as admin with no prompt. Built: dr eggbot's non-elevated terminal starts a \WinSetup\ task, the task runs elevated as me, and runner.ps1 accepts only five actions and writes a log. From the normal account, writing to the folder, editing the runner and re-registering a task are all denied. Changing the menu means rerunning the installer from an admin window](/build-log/images/ai-assistant-admin-without-breaking-uac/verbs-not-a-shell.svg)
+![Two ways to give an assistant admin. Rejected: anything running as me could use an SSH key in my profile to reach localhost and get any command as admin with no prompt. Built: dr eggbot's non-elevated terminal starts a \WinSetup\ task, the task runs elevated as me, and runner.ps1 accepts only five actions and writes a log. From the normal account, writing to the folder, editing the runner and re-registering a task are all denied. Changing the menu means rerunning the installer from an admin window](/build-log/images/ai-assistant-admin-without-breaking-uac/verbs-not-a-shell.png)
 
 I pasted the installer once, from an admin window. Then dr eggbot started the RestorePoint task from its own non-elevated terminal, and it worked: a fresh restore point, exit 0.
 
