@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 520" width="880" height="520" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+<title id="t">One markdown file, three sites, and the four places it broke</title><desc id="d">A post in content/ is merged to main. deploy.yml builds the Astro site and publishes the original to GitHub Pages. crosspost.yml runs npm ci and npm test, then crosspost.mjs takes only the content files changed in that push, rewrites site-relative URLs to absolute ones, and sends each post to dev.to, then Hashnode, with its canonical_url. Any rejected send turns the run red. Remote ids are committed to sync-state.json with [skip ci], and paths-ignore keeps that commit and log/ notes from starting another cross-post. Numbered markers show the four breaks: 1, site-relative URLs, fixed in PR 17; 2, a lockfile npm ci rejected, fixed in PR 18; 3, Hashnode's retired endpoint, fixed in PR 19; 4, a green run that hid a failed send, fixed in PR 21.</desc>
+<rect width="880" height="520" rx="12" fill="#fbfaf7"/>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker></defs>
+<text x="30" y="40" font-size="20" font-weight="600" fill="#1f2328">One file in, three sites out, four places it broke</text>
+<g font-size="13" text-anchor="middle">
+<rect x="30" y="70" width="190" height="64" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="125" y="97" font-weight="600" fill="#1f2328">content/DATE-slug.md</text>
+<text x="125" y="118" fill="#57606a">the only original</text>
+<rect x="240" y="70" width="190" height="64" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="335" y="97" font-weight="600" fill="#1f2328">Merge to main</text>
+<text x="335" y="118" fill="#57606a">my merge is the approval</text>
+<rect x="450" y="70" width="190" height="64" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="545" y="97" font-weight="600" fill="#1f2328">deploy.yml</text>
+<text x="545" y="118" fill="#57606a">Astro build</text>
+<rect x="660" y="70" width="190" height="64" rx="8" fill="#dafbe1" stroke="#1a7f37" stroke-width="1.5"/>
+<text x="755" y="97" font-weight="600" fill="#1f2328">GitHub Pages</text>
+<text x="755" y="118" fill="#57606a">the canonical_url</text>
+<rect x="240" y="190" width="190" height="64" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="335" y="217" font-weight="600" fill="#1f2328">crosspost.yml</text>
+<text x="335" y="238" fill="#57606a">npm ci, then npm test</text>
+<rect x="450" y="190" width="190" height="64" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="545" y="217" font-weight="600" fill="#1f2328">crosspost.mjs</text>
+<text x="545" y="238" fill="#57606a">changed posts, absolute URLs</text>
+<rect x="660" y="190" width="190" height="64" rx="8" fill="#dafbe1" stroke="#1a7f37" stroke-width="1.5"/>
+<text x="755" y="217" font-weight="600" fill="#1f2328">dev.to</text>
+<text x="755" y="238" fill="#57606a">find by canonical_url first</text>
+<rect x="660" y="300" width="190" height="64" rx="8" fill="#dafbe1" stroke="#1a7f37" stroke-width="1.5"/>
+<text x="755" y="327" font-weight="600" fill="#1f2328">Hashnode</text>
+<text x="755" y="348" fill="#57606a">runs next, gql-beta host</text>
+<rect x="450" y="300" width="190" height="64" rx="8" fill="#ffebe9" stroke="#cf222e" stroke-width="1.5"/>
+<text x="545" y="327" font-weight="600" fill="#1f2328">Run result</text>
+<text x="545" y="348" fill="#57606a">any rejected send = red</text>
+<rect x="240" y="300" width="190" height="64" rx="8" fill="#ffffff" stroke="#0969da" stroke-width="1.5"/>
+<text x="335" y="327" font-weight="600" fill="#1f2328">sync-state.json</text>
+<text x="335" y="348" fill="#57606a">ids committed, [skip ci]</text>
+<rect x="30" y="300" width="190" height="64" rx="8" fill="#f6f8fa" stroke="#57606a" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="125" y="327" font-weight="600" fill="#1f2328">paths-ignore</text>
+<text x="125" y="348" fill="#57606a">sync-state.json, log/**</text>
+</g>
+<g stroke="#57606a" stroke-width="1.5" fill="none" marker-end="url(#a)">
+<line x1="220" y1="102" x2="238" y2="102"/>
+<line x1="430" y1="102" x2="448" y2="102"/>
+<line x1="640" y1="102" x2="658" y2="102"/>
+<line x1="335" y1="134" x2="335" y2="188"/>
+<line x1="430" y1="222" x2="448" y2="222"/>
+<line x1="640" y1="222" x2="658" y2="222"/>
+<line x1="755" y1="254" x2="755" y2="298"/>
+<line x1="660" y1="332" x2="642" y2="332"/>
+<line x1="450" y1="332" x2="432" y2="332"/>
+<line x1="240" y1="332" x2="222" y2="332" stroke-dasharray="6 4"/>
+</g>
+<g font-size="13" font-weight="700" text-anchor="middle" fill="#ffffff">
+<circle cx="636" cy="194" r="13" fill="#cf222e"/><text x="636" y="199">1</text>
+<circle cx="426" cy="194" r="13" fill="#cf222e"/><text x="426" y="199">2</text>
+<circle cx="846" cy="304" r="13" fill="#cf222e"/><text x="846" y="309">3</text>
+<circle cx="636" cy="304" r="13" fill="#cf222e"/><text x="636" y="309">4</text>
+</g>
+<g font-size="13" fill="#1f2328">
+<text x="30" y="404" font-weight="600">What broke the first time it ran for real (Oct 30–31, 2026)</text>
+<text x="30" y="430">1. Site-relative image and link URLs would have broken on dev.to and Hashnode. Fixed in #17.</text>
+<text x="30" y="454">2. #17's lockfile came from a newer npm, and npm ci on the runner refused it. Fixed in #18.</text>
+<text x="30" y="478">3. Hashnode's old API host redirects to a paid-API notice. Moved to gql-beta in #19.</text>
+<text x="30" y="502">4. Hashnode failed and the run still went green. Since #21 a rejected send fails the run.</text>
+</g>
+</svg>
