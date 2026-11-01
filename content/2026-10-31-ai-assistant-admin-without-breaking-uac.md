@@ -1,6 +1,6 @@
 ---
 title: "Giving my Grok Bot assistant admin rights without switching off UAC"
-date: 2026-11-01
+date: 2026-10-31
 tags: [windows-11, uac, powershell, ai-agents]
 summary: "SSH to localhost would have given dr eggbot, one of my Grok Bot assistants, silent admin over everything. Instead it gets a fixed menu of five elevated scheduled tasks it can start but not change, and I tested that boundary from the account it actually runs as."
 canonical_url: "https://mikepred.github.io/build-log/ai-assistant-admin-without-breaking-uac/"
