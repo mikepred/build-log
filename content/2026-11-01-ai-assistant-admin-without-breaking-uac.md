@@ -101,15 +101,33 @@ $src = $PSScriptRoot; $dst = 'C:\ProgramData\WinSetupAdmin'
 $user = $id.Name; $sid = $id.User.Value
 $actions = 'RestorePoint','Tweaks','Apps','SaveDumps','Check'
 
-# Lock the folder itself first, touching nothing inside it: owner Administrators and one complete permission list
-# (Administrators + SYSTEM full control, Users read and run, nothing inherited). Editing the list would keep old grants.
-New-Item $dst -ItemType Directory -Force | Out-Null
-if ((Get-Item -LiteralPath $dst -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "$dst is a link. Delete it and rerun." }
-icacls $dst /setowner '*S-1-5-32-544' | Out-Null   # this folder only, no /T: a recursive walk could follow a link planted inside
+# The check the installer trusts: stop at any link, and if anyone but Administrators or SYSTEM owns, or can change,
+# anything under $path. The walk is hand-rolled because Get-ChildItem -Recurse in Windows PowerShell follows junctions.
+$trusted = 'S-1-5-32-544','S-1-5-18'
+$change  = [int][Security.AccessControl.FileSystemRights]'Write, Delete, DeleteSubdirectoriesAndFiles, ChangePermissions, TakeOwnership' -bor 0x50000000   # + generic all/write
+function Assert-Locked($path) {
+  $queue = New-Object Collections.Queue; $queue.Enqueue((Get-Item -LiteralPath $path -Force))
+  while ($queue.Count) {
+    $item = $queue.Dequeue()
+    if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "Link found: $($item.FullName). Delete the folder and rerun." }
+    $itemAcl = Get-Acl -LiteralPath $item.FullName
+    if ($trusted -notcontains $itemAcl.GetOwner([Security.Principal.SecurityIdentifier]).Value) { throw "Not owned by Administrators: $($item.FullName). Delete the folder and rerun." }
+    foreach ($r in $itemAcl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])) {
+      if ($r.AccessControlType -eq 'Allow' -and $trusted -notcontains $r.IdentityReference.Value -and ([int]$r.FileSystemRights -band $change)) {
+        throw "$($r.IdentityReference.Value) can change $($item.FullName). Delete the folder and rerun."
+      }
+    }
+    if ($item.PSIsContainer) { Get-ChildItem -LiteralPath $item.FullName -Force | ForEach-Object { $queue.Enqueue($_) } }
+  }
+}
+
+# A new folder is created already locked, in one step: owner Administrators and one complete permission list
+# (Administrators + SYSTEM full control, Users read and run, nothing inherited), so nothing can be planted in it first.
+# An existing folder is never re-permissioned (that would push the new list into whatever is inside). It's only reused
+# if it already passes the check; otherwise delete it and rerun.
 $acl = New-Object Security.AccessControl.DirectorySecurity
-$acl.SetSecurityDescriptorSddlForm('D:PAI(A;OICI;FA;;;BA)(A;OICI;FA;;;SY)(A;OICI;0x1200a9;;;BU)')
-Set-Acl -LiteralPath $dst -AclObject $acl
-if (Get-ChildItem -LiteralPath $dst -Force -Attributes ReparsePoint) { throw "$dst contains a link. Delete the folder and rerun." }
+$acl.SetSecurityDescriptorSddlForm('O:BAD:PAI(A;OICI;FA;;;BA)(A;OICI;FA;;;SY)(A;OICI;0x1200a9;;;BU)')
+if (Test-Path -LiteralPath $dst) { Assert-Locked $dst } else { [void][IO.Directory]::CreateDirectory($dst, $acl) }
 
 # Delete and re-copy each script rather than overwrite it, so the new file inherits the list above instead of keeping old grants.
 foreach ($f in 'runner.ps1','01-tweaks.ps1','02-apps.ps1','apps.json','save-dumps.ps1') {
@@ -118,24 +136,7 @@ foreach ($f in 'runner.ps1','01-tweaks.ps1','02-apps.ps1','apps.json','save-dump
   Copy-Item -LiteralPath (Join-Path $src $f) -Destination $target
   icacls $target /setowner '*S-1-5-32-544' | Out-Null
 }
-
-# Check the result instead of trusting it: stop at any link, and if anyone but Administrators or SYSTEM owns, or can change,
-# anything in there. The walk is hand-rolled because Get-ChildItem -Recurse in Windows PowerShell follows junctions.
-$trusted = 'S-1-5-32-544','S-1-5-18'
-$change  = [int][Security.AccessControl.FileSystemRights]'Write, Delete, DeleteSubdirectoriesAndFiles, ChangePermissions, TakeOwnership' -bor 0x50000000   # + generic all/write
-$queue = New-Object Collections.Queue; $queue.Enqueue((Get-Item -LiteralPath $dst -Force))
-while ($queue.Count) {
-  $item = $queue.Dequeue()
-  if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "Link found: $($item.FullName). Delete it and rerun." }
-  $itemAcl = Get-Acl -LiteralPath $item.FullName
-  if ($trusted -notcontains $itemAcl.GetOwner([Security.Principal.SecurityIdentifier]).Value) { throw "Not owned by Administrators: $($item.FullName)" }
-  foreach ($r in $itemAcl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])) {
-    if ($r.AccessControlType -eq 'Allow' -and $trusted -notcontains $r.IdentityReference.Value -and ([int]$r.FileSystemRights -band $change)) {
-      throw "$($r.IdentityReference.Value) can change $($item.FullName). Fix it, or delete the folder, and rerun."
-    }
-  }
-  if ($item.PSIsContainer) { Get-ChildItem -LiteralPath $item.FullName -Force | ForEach-Object { $queue.Enqueue($_) } }
-}
+Assert-Locked $dst   # check the result instead of trusting it; no tasks get registered if this throws
 
 $ps  = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"   # full path, not a PATH lookup
 $svc = New-Object -ComObject 'Schedule.Service'; $svc.Connect()
@@ -152,8 +153,8 @@ Get-ScheduledTask -TaskPath '\WinSetup\' | Select-Object TaskName, State
 
 A few notes on what those lines do:
 
-- The folder's permissions are written as one complete list (the SDDL string `D:PAI(...)`), and each script is deleted and copied in fresh so it inherits that list. `icacls /grant:r` alone only swaps the entries it names, so an old write grant for your account would survive a rerun, and so would your ability to swap the scripts the tasks run.
-- Nothing privileged walks the folder recursively. A junction planted inside could point a recursive owner or permission change at some other folder, so the installer only touches the folder itself and the files it names, and refuses to continue if it finds a link. The final check walks everything without following links. It refuses to register any tasks if it finds a link, an owner other than Administrators or SYSTEM, or anyone else who can change something. On a folder an older version left behind, that can mean deleting it and rerunning.
+- The folder's permissions are written as one complete list (the SDDL string `O:BAD:PAI(...)`), at the moment the folder is created, and each script is deleted and copied in fresh so it inherits that list. `icacls /grant:r` alone only swaps the entries it names, so an old write grant for your account would survive a rerun, and so would your ability to swap the scripts the tasks run.
+- Nothing privileged walks the folder or changes permissions on anything already inside it. Applying a permission list to an existing folder pushes it down into everything inside, and a junction planted in there could point that change at some other folder. So the installer only creates the folder locked, reuses one only if it's already locked, and touches nothing but the files it names. The check walks everything without following links. It refuses to register any tasks if it finds a link, an owner other than Administrators or SYSTEM, or anyone else who can change something. On a folder an older version left behind, that can mean deleting it and rerunning.
 - `-RunLevel Highest` with `-LogonType Interactive` means the task gets your full admin token, but only while you're signed in.
 - The SDDL string at the end is the task's own permission list: `FA` (full access) for Administrators (`BA`) and SYSTEM (`SY`), and only `FRFX` (read and run) for your account.
 - `-ExecutionPolicy Bypass` is PowerShell's script-signing setting, not UAC. It's there so the task can run unsigned local scripts. The real protection is that only admins can change those scripts.
