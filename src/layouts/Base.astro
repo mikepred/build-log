@@ -122,6 +122,12 @@ const logHref = `${import.meta.env.BASE_URL}log/`;
           )
         }
       </header>
+      <nav aria-label="Main navigation">
+        <a href={`${homeHref}start-here/`}>Start Here</a> ·
+        <a href={`${homeHref}about/`}>About</a> ·
+        <a href={`${homeHref}projects/`}>Projects</a> ·
+        <a href="https://github.com/mikepred/build-log">GitHub</a>
+      </nav>
       <main>
         <slot />
       </main>
