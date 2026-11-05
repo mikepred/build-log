@@ -1,82 +1,37 @@
-# build-log
+# Build Log
 
-Case notes from real work: things that broke, how I tracked them down, and what I changed so they don't break again. Windows, automation, AI agents, and dev tooling. Each post has a quick case file, the story, and copy-paste steps to do it yourself.
+I’m Mikhail Predtetchenski, usually known as Mike. This is where I keep a public record of things I’m building, connecting, and troubleshooting.
 
-This repo is the source. Read it here:
+Some of it is Windows and PowerShell. Some is AI agents, memory systems, and automation. Usually something comes up while I’m working, I try to understand it, and the process becomes a post.
 
-- Site (the original): <https://mikepred.github.io/build-log/>
-- dev.to: <https://dev.to/mikepred>
-- Hashnode: <https://mikepred.hashnode.dev>
-- RSS: <https://mikepred.github.io/build-log/rss.xml>
+I want to keep track of what I tried and why, including the approaches that went nowhere. Otherwise, a few weeks later I’m back to figuring out something I already spent a night on.
 
-## What's where
+## Read the log
 
-| Path | What it is |
-| --- | --- |
-| `content/` | Posts, one Markdown file each: `content/YYYY-MM-DD-slug.md`. The only originals. |
-| `log/` | The [running log](https://mikepred.github.io/build-log/log/): short dated notes, site only. |
-| `social/` | Draft social posts for each post, one folder per slug. Not published by anything here. |
-| `src/` | The Astro site: layout, pages, RSS feed, and the per-post social card renderer (font in `src/assets/fonts/`, SIL OFL). |
-| `scripts/` | Cross-posting (`crosspost.mjs` plus one sender per platform in `senders/`) and its tests. |
-| `public/` | Static files: images, favicon, `og-default.png`, `robots.txt`. |
+- [Website](https://mikepred.github.io/build-log/)
+- [Hashnode](https://mikepred.hashnode.dev/)
+- [dev.to](https://dev.to/mikepred)
+- [RSS](https://mikepred.github.io/build-log/rss.xml)
 
-## How publishing works
+## Where to start
 
-- **Merge to `main` deploys the site.** GitHub Actions builds it with Astro and pushes it to GitHub Pages.
-- **The same push cross-posts.** [`scripts/crosspost.mjs`](scripts/crosspost.mjs) looks at files in `content/` that were added or changed in that push and sends each one to dev.to and Hashnode with the post's `canonical_url`, so both point back to the site. Pushes that don't touch `content/` just find nothing to send.
-- **`log/**` is ignored by the cross-post workflow,** so a log-only push just redeploys the site.
-- Site-relative links and images (like `/build-log/images/…`) are rewritten to absolute site URLs in the copies, so they still work on dev.to and Hashnode. The site itself renders the original Markdown.
-- Edit a post here and the push that changes it updates the copies. Edits made on dev.to or Hashnode get overwritten the next time that post's file changes.
-- Remote post ids live in [`sync-state.json`](sync-state.json). The workflow commits it back with `[skip ci]`, so it doesn't loop.
+[How it started: nine bots in a week, then back to one](https://mikepred.github.io/build-log/how-it-started/) explains how this publication came out of experimenting with a team of AI assistants.
 
-The site also ships a sitemap (`sitemap-index.xml`), an RSS feed of posts (no log notes), and Open Graph/Twitter cards plus JSON-LD on every post. Each post gets its own 1200x630 share image (title, date, tags), rendered at build time to `/og/<slug>.png`. Other pages use `og-default.png`.
+A few other cases:
 
-## One-time setup
+- [Windows Update pushed an AMD chipset driver over mine and broke boot](https://mikepred.github.io/build-log/windows-update-amd-chipset-driver-broke-boot/)
+- [My OneDrive’s problem was 322,219 files, not 268 GB](https://mikepred.github.io/build-log/onedrive-audit-file-count-not-size/)
+- [Giving my Grok Bot assistant admin rights without switching off UAC](https://mikepred.github.io/build-log/ai-assistant-admin-without-breaking-uac/)
+- [One markdown file, three sites: what broke the first time my crosspost ran](https://mikepred.github.io/build-log/one-markdown-file-three-sites/)
 
-- **Pages source:** in **Settings → Pages**, set the source to **GitHub Actions**. Until then the deploy workflow has nowhere to publish.
-- **Actions secrets** (Settings → Secrets and variables → Actions): `DEVTO_API_KEY` for dev.to, `HASHNODE_TOKEN` and `HASHNODE_PUBLICATION_ID` for Hashnode. A sender with a missing secret warns and is skipped; the site deploy doesn't use them.
-- **A rejected send fails the run.** If dev.to or Hashnode rejects a post (auth, plan, or API error), the error goes to the job log (Hashnode also adds a `Hashnode FAILED: …` line to the step summary). That post isn't written to `sync-state.json` for that site, the other senders and posts still run, and then the job exits non-zero so the check goes red. Successful sends from the same run are still committed to `sync-state.json`.
-- **Adding a platform:** add one file in `scripts/senders/` that exports `id`, `disabledReason`, `plan`, and `publish`. `plan` must not touch the network.
+## About this repository
 
-## Post frontmatter
+The original posts live in [`content/`](content/). Shorter notes go in [`log/`](log/).
 
-All five fields are required:
+This repository also contains the Astro site and the scripts that send posts to Hashnode and dev.to. I review and merge the changes; GitHub Actions handles publishing. The copies point back to the original on the website.
 
-```markdown
----
-title: "Scheduled task that never fired"
-date: 2026-10-24          # the day it's published
-tags: [powershell, windows]   # 4 max (dev.to's limit)
-summary: "One or two sentences. Used as the meta description, dev.to description and Hashnode subtitle."
-canonical_url: "https://mikepred.github.io/build-log/scheduled-task-that-never-fired/"
----
-```
-
-The filename's date prefix is dropped from the URL: `content/2026-10-24-foo-bar.md` → `/build-log/foo-bar/`. Keep `canonical_url` pointing at that URL and don't change it later; dev.to and Hashnode use it as the post's identity. `tags`, `index`, `404`, `rss.xml`, and `log` are reserved slugs.
-
-Log notes are lighter:
-
-```markdown
----
-date: 2026-10-30
-title: optional heading
----
-
-a few casual lines about what happened.
-```
-
-## Run it locally
-
-Node.js 22.23.4 or newer.
-
-```bash
-npm install
-npm run dev       # serves under /build-log/
-npm run build     # writes dist/
-npm test          # cross-post script tests
-node scripts/crosspost.mjs --dry-run content/2026-10-24-foo-bar.md   # no network
-```
+I use AI throughout the work and the writing. I’m responsible for what I publish, including making clear what was tested, what I’m inferring, and what I still haven’t figured out.
 
 ## Licenses
 
-Code and snippets (including the commands inside posts) are [MIT](LICENSE). The posts themselves in `content/` are [CC BY 4.0](LICENSE-content).
+Code and snippets are [MIT](LICENSE). Posts are [CC BY 4.0](LICENSE-content).
