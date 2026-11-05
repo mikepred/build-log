@@ -45,7 +45,7 @@ canonical_url: "https://mikepred.github.io/build-log/scheduled-task-that-never-f
 ---
 ```
 
-The filename's date prefix is dropped from the URL: `content/2026-10-24-foo-bar.md` → `/build-log/foo-bar/`. Keep `canonical_url` pointing at that URL and don't change it later; dev.to and Hashnode use it as the post's identity. `tags`, `index`, `404`, `rss.xml`, and `log` are reserved slugs.
+The filename's date prefix is dropped from the URL: `content/2026-10-24-foo-bar.md` → `/build-log/foo-bar/`. Keep `canonical_url` pointing at that URL and don't change it later; dev.to and Hashnode use it as the post's identity. `tags`, `index`, `404`, `rss.xml`, `log`, `about`, `start-here`, and `projects` are reserved slugs.
 
 Log notes are lighter:
 
