@@ -1,0 +1,72 @@
+# Build Log maintenance
+
+Technical reference moved from the README. These instructions describe the existing publishing setup.
+
+## What's where
+
+| Path | What it is |
+| --- | --- |
+| `content/` | Posts, one Markdown file each: `content/YYYY-MM-DD-slug.md`. The only originals. |
+| `log/` | The [running log](https://mikepred.github.io/build-log/log/): short dated notes, site only. |
+| `social/` | Draft social posts for each post, one folder per slug. Not published by anything here. |
+| `src/` | The Astro site: layout, pages, RSS feed, and the per-post social card renderer (font in `src/assets/fonts/`, SIL OFL). |
+| `scripts/` | Cross-posting (`crosspost.mjs` plus one sender per platform in `senders/`) and its tests. |
+| `public/` | Static files: images, favicon, `og-default.png`, `robots.txt`. |
+
+## How publishing works
+
+- **Merge to `main` deploys the site.** GitHub Actions builds it with Astro and pushes it to GitHub Pages.
+- **The same push cross-posts.** [`scripts/crosspost.mjs`](scripts/crosspost.mjs) looks at files in `content/` that were added or changed in that push and sends each one to dev.to and Hashnode with the post's `canonical_url`, so both point back to the site. Pushes that don't touch `content/` just find nothing to send.
+- **`log/**` is ignored by the cross-post workflow,** so a log-only push just redeploys the site.
+- Site-relative links and images (like `/build-log/images/…`) are rewritten to absolute site URLs in the copies, so they still work on dev.to and Hashnode. The site itself renders the original Markdown.
+- Edit a post here and the push that changes it updates the copies. Edits made on dev.to or Hashnode get overwritten the next time that post's file changes.
+- Remote post ids live in [`sync-state.json`](sync-state.json). The workflow commits it back with `[skip ci]`, so it doesn't loop.
+
+The site also ships a sitemap (`sitemap-index.xml`), an RSS feed of posts (no log notes), and Open Graph/Twitter cards plus JSON-LD on every post. Each post gets its own 1200x630 share image (title, date, tags), rendered at build time to `/og/<slug>.png`. Other pages use `og-default.png`.
+
+## One-time setup
+
+- **Pages source:** in **Settings → Pages**, set the source to **GitHub Actions**. Until then the deploy workflow has nowhere to publish.
+- **Actions secrets** (Settings → Secrets and variables → Actions): `DEVTO_API_KEY` for dev.to, `HASHNODE_TOKEN` and `HASHNODE_PUBLICATION_ID` for Hashnode. A sender with a missing secret warns and is skipped; the site deploy doesn't use them.
+- **A rejected send fails the run.** If dev.to or Hashnode rejects a post (auth, plan, or API error), the error goes to the job log (Hashnode also adds a `Hashnode FAILED: …` line to the step summary). That post isn't written to `sync-state.json` for that site, the other senders and posts still run, and then the job exits non-zero so the check goes red. Successful sends from the same run are still committed to `sync-state.json`.
+- **Adding a platform:** add one file in `scripts/senders/` that exports `id`, `disabledReason`, `plan`, and `publish`. `plan` must not touch the network.
+
+## Post frontmatter
+
+All five fields are required:
+
+```markdown
+---
+title: "Scheduled task that never fired"
+date: 2026-10-24          # the day it's published
+tags: [powershell, windows]   # 4 max (dev.to's limit)
+summary: "One or two sentences. Used as the meta description, dev.to description and Hashnode subtitle."
+canonical_url: "https://mikepred.github.io/build-log/scheduled-task-that-never-fired/"
+---
+```
+
+The filename's date prefix is dropped from the URL: `content/2026-10-24-foo-bar.md` → `/build-log/foo-bar/`. Keep `canonical_url` pointing at that URL and don't change it later; dev.to and Hashnode use it as the post's identity. `tags`, `index`, `404`, `rss.xml`, and `log` are reserved slugs.
+
+Log notes are lighter:
+
+```markdown
+---
+date: 2026-10-30
+title: optional heading
+---
+
+a few casual lines about what happened.
+```
+
+## Run it locally
+
+Node.js 22.23.4 or newer.
+
+```bash
+npm install
+npm run dev       # serves under /build-log/
+npm run build     # writes dist/
+npm test          # cross-post script tests
+node scripts/crosspost.mjs --dry-run content/2026-10-24-foo-bar.md   # no network
+```
+
