@@ -9,8 +9,6 @@ This repo is the source. Read it here:
 - Hashnode: <https://mikepred.hashnode.dev>
 - RSS: <https://mikepred.github.io/build-log/rss.xml>
 
-No tracking, newsletter, affiliate links, or calls to action.
-
 ## What's where
 
 | Path | What it is |
