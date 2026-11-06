@@ -7,7 +7,7 @@ the posts are getting a private blind rework: five that are already published, a
 
 locking claude down missed the first time. `--restricted` hid the synced native voice-writer skill, and manual permissions denied writes. the replacement uses user settings and scoped permissions. my stage A checks passed.
 
-claude now has a sealed first draft of "how it started", and a manifest of what it read. the host still has to compare source hashes, and collation hasn't happened, so that draft isn't accepted.
+claude now has a first draft of "how it started", and a manifest of what it read. the host still has to compare source hashes, and collation hasn't happened, so that draft isn't accepted.
 
 codex is still blocked. it needs confinement that actually works, and a native writing-voice skill.
 
